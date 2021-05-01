@@ -21,7 +21,7 @@ using namespace std;
 #define FRAME_DURATION 6
 #define F 360
 //#define H 128
-#define R 60
+#define R 128
 #define L 3456000
 #define SNAPSHOT_STEP 3600
 
@@ -88,8 +88,8 @@ void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput
 {
 	int rOffset = threadIdx.x + blockIdx.x * blockDim.x;
 	int rStride = blockDim.x * gridDim.x;
-	int hOffset = threadIdx.y + blockIdx.y * blockDim.y;
-	int hStride = blockDim.y * gridDim.y;
+	int fOffset = threadIdx.y + blockIdx.y * blockDim.y;
+	int fStride = blockDim.y * gridDim.y;
 
 	for (int r = rOffset; r < R - 1; r += rStride)
 	{
@@ -102,7 +102,7 @@ void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput
 		if (r < R / 4)
 		{
 			df = BASE_df * 4;
-			for (int f = 0; f < F / 4; ++f)
+			for (int f = fOffset; f < F / 4; f += fStride)
 			{
 				u = uInput[r * F / 4 + f];
 				v = vInput[r * F / 4 + f];
@@ -148,7 +148,7 @@ void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput
 		else if (r < R / 2)
 		{
 			df = BASE_df * 2;
-			for (int f = 0; f < F / 2; ++f)
+			for (int f = fOffset; f < F / 2; f += fStride)
 			{
 				u = uInput[R * F / 16 + (r - R / 4) * F / 2 + f];
 				v = vInput[R * F / 16 + (r - R / 4) * F / 2 + f];
@@ -191,7 +191,7 @@ void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput
 		} 
 		else
 		{
-			for (int f = 0; f < F; ++f)
+			for (int f = fOffset; f < F; f += fStride)
 			{
 
 				u = uInput[3 * R * F / 16 + (r - R / 2) * F + f];
@@ -266,8 +266,8 @@ int main()
 		matrixV[i] = matrixV1[i] = 0;
 	}
 
-	dim3 blocks(1, 1);
-	dim3 threads(64, 1);
+	dim3 blocks(1, 10);
+	dim3 threads(32, 12);
 
 	auto start = clock();
 	double* temp = NULL;
@@ -296,7 +296,7 @@ int main()
 			cout << "calcKernel: " << cudaGetErrorString(err) << endl;
 
 
-		boundaryKernel <<< 1, 64 >>> (matrixU2, matrixV2);
+		boundaryKernel <<< 10, 64 >>> (matrixU2, matrixV2);
 		err = cudaGetLastError();
 		if (err != cudaSuccess)
 			cout << "boundaryKernel: " << cudaGetErrorString(err) << endl;
