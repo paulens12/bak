@@ -22,7 +22,8 @@ using namespace std;
 #define F 360
 //#define H 128
 #define R 128
-#define L 3456000
+//#define L 3456000
+#define L 360000
 #define SNAPSHOT_STEP 3600
 
 // fp - f+1
@@ -33,24 +34,28 @@ __device__
 inline double getNextU(
 	double u, double urp, double urm, double ufp, double ufm,
 	double v, double vrp, double vrm, double vfp, double vfm,
-	double r, double f, double df
+	int r, int f, double df
 )
 {
+	double urp2 = (u + urp) / 2;
+	double urm2 = (u + urm) / 2;
 	double ufp2 = (u + ufp) / 2;
 	double ufm2 = (u + ufm) / 2;
+	double rp2 = (2 * r * dr + dr) / 2;
+	double rm2 = (2 * r * dr - dr) / 2;
 
 	return dt * (
-		Du * (
-			(urp - urm) / (2 * dr * r)
-			+ (urp - 2 * u + urm) / dr2
-			+ (ufp - 2 * u + ufm) / (df * df * r * r)
-			)
-		- chi * (
-			(u * (vrp - vrm) / (2 * r)
-				+ (urp - urm) * (vrp - vrm) / (4 * dr)
-				+ u * (vrp - 2 * v + vrm) / dr) / dr
-			+ (ufp2 * (vfp - v) - ufm2 * (v - vfm)) / (df * df * r * r) / dr2)
-		+ au * u * (1 - u)
+		Du * ((
+			((rp2 * (urp - u) - rm2 * (u - urm))
+				/ (r * dr)) / (dr * dr)
+			) + (
+				((ufp - 2 * u + ufm) / (r * r * dr * dr)) / (df * df)
+				)
+			) - chi * (
+				((rp2 * urp2 * (vrp - v) - rm2 * urm2 * (v - vrm))
+					/ (r * dr)) / (dr * dr)
+				+ ((ufp2 * (vfp - v) - ufm2 * (v - vfm)) / (r * r * dr * dr)) / (df * df)
+				) + au * u * (1 - u)
 		) + u;
 }
 
@@ -58,16 +63,20 @@ __device__
 inline double getNextV(
 	double u,
 	double v, double vrp, double vrm, double vfp, double vfm,
-	double r, double f, double df
+	int r, int f, double df
 )
 {
+	double rp2 = (2 * r * dr + dr) / 2;
+	double rm2 = (2 * r * dr - dr) / 2;
+
 	return dt * (
-		(vrp - vrm) / (2 * dr * r)
-		+ (vrp - 2 * v + vrm) / dr2
-		+ (vfp - 2 * v + vfm) / (df * df * r * r)
-		+ u / (1 + Bv * u)
-		- v
-		) + u;
+		(
+			((rp2 * (vrp - v) - rm2 * (v - vrm))
+				/ (r * dr)) / (dr * dr)
+			) + (
+				((vfp - 2 * f + vfm) / (r * r * dr * dr)) / (df * df)
+				) + u / (1 + Bv * u) - v
+		) + v;
 }
 
 __global__
@@ -267,7 +276,7 @@ int main()
 	}
 
 	dim3 blocks(1, 10);
-	dim3 threads(32, 12);
+	dim3 threads(32, 6);
 
 	auto start = clock();
 	double* temp = NULL;
@@ -280,8 +289,8 @@ int main()
 			//save frame
 			double elapsed = (clock() - start) / (double)CLOCKS_PER_SEC;
 			cout << "step " << step << ", time elapsed: " << elapsed << ", avg: " << elapsed / step << endl;
-			cudaMemcpy(matrixU + step * bufferlength, matrixU1 + step * bufferlength, size, cudaMemcpyKind::cudaMemcpyDeviceToHost);
-			cudaMemcpy(matrixV + step * bufferlength, matrixV1 + step * bufferlength, size, cudaMemcpyKind::cudaMemcpyDeviceToHost);
+			cudaMemcpy(matrixU + step * bufferlength, matrixU1, size, cudaMemcpyKind::cudaMemcpyDeviceToHost);
+			cudaMemcpy(matrixV + step * bufferlength, matrixV1, size, cudaMemcpyKind::cudaMemcpyDeviceToHost);
 			//for (int j = 0; j < bufferlength; ++j)
 			//{
 			//	matrixU[step * bufferlength + j] = matrixU1[j];
@@ -318,6 +327,14 @@ int main()
 	//double maxV = 0.7;
 	//double multiU = 255 / maxU;
 	//double multiV = 255 / maxV;
+
+	FILE* datu = fopen("u.dat", "w");
+	fwrite(matrixU, 1, size * (L / SNAPSHOT_STEP + 1), datu);
+	FILE* datv = fopen("v.dat", "w");
+	fwrite(matrixV, 1, size * (L / SNAPSHOT_STEP + 1), datv);
+
+	fclose(datu);
+	fclose(datv);
 
 	FILE* csvu = fopen("u.csv", "w");
 	FILE* csvv = fopen("v.csv", "w");
