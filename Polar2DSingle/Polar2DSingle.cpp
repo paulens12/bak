@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <random>
 #include <chrono>
 #define _USE_MATH_DEFINES
@@ -8,14 +9,14 @@
 
 using namespace std;
 
-const double Du = 0.1;
-const double chi = 8.3;
+const double Du = 0.15;
+const double chi = 11;
 const double au = 1;
 const double Bv = 0.73;
-const int R = 60; /* 2pi(R*dr) = 360*dx (cartesian sim) */
+const int R = 60;
 const int F = 200;
 const double dt = 0.00005;
-const double dr = 9 / (M_PI * R);
+const double dr = 9 / (M_PI * R); /* 2pi(R*dr) = 360*dx */
 const double dr2 = dr * dr;
 //#define dr (0.04774648292756860073066512901175) /* 3/(20pi) */
 //#define dr2 (0.00227972663195259985748728792222) /* dr * dr */
@@ -23,9 +24,8 @@ const double BASE_df = 2 * M_PI / F;
 
 #define FRAME_DURATION 6
 //#define H 128
-//#define L 3456000
-#define L 360000
-#define SNAPSHOT_STEP 1000
+#define L 3456000
+#define SNAPSHOT_STEP 3600
 
 
 bool arnan(double x) {
@@ -222,7 +222,7 @@ void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput
 
 			if (f == 0) fm = 3 * R * F / 16 + (r - R / 2 + 1) * F - 1;
 			else fm = 3 * R * F / 16 + (r - R / 2) * F + f - 1;
-			if (f == F / 2 - 1) fp = 3 * R * F / 16 + (r - R / 2) * F;
+			if (f == F - 1) fp = 3 * R * F / 16 + (r - R / 2) * F;
 			else fp = 3 * R * F / 16 + (r - R / 2) * F + f + 1;
 
 			ufp = uInput[fp];
@@ -268,7 +268,7 @@ int main()
 	normal_distribution<double> distr(0, 0.1);
 	default_random_engine re(1);
 
-	for (int i = 0; i < bufferlength; i++)
+	for (int i = 0; i < bufferlength; ++i)
 	{
 		matrixU[i] = matrixU1[i] = distr(re) + 1.0;
 		matrixV[i] = matrixV1[i] = 0;
@@ -318,18 +318,21 @@ int main()
 	//double maxV = 0.7;
 	//double multiU = 255 / maxU;
 	//double multiV = 255 / maxV;
-	FILE* datu, * datv;
-	err = fopen_s(&datu, "u.dat", "w");
-	if (!err)
+	ofstream datustream;
+	datustream.open("u.dat", ios::binary | ios::out);
+	if (datustream.is_open())
 	{
-		fwrite(matrixU, 1, size * (L / SNAPSHOT_STEP + 1), datu);
-		fclose(datu);
+		cout << "stream open!" << endl;
+		datustream.write((char*)matrixU, size * (L / SNAPSHOT_STEP + 1));
+		datustream.close();
 	}
-	err = fopen_s(&datv, "v.dat", "w");
-	if (!err)
+	ofstream datvstream;
+	datvstream.open("v.dat", ios::binary | ios::out);
+	if (datvstream.is_open())
 	{
-		fwrite(matrixV, 1, size * (L / SNAPSHOT_STEP + 1), datv);
-		fclose(datv);
+		cout << "stream open!" << endl;
+		datvstream.write((char*)matrixV, size * (L / SNAPSHOT_STEP + 1));
+		datvstream.close();
 	}
 
 	FILE* csvu, * csvv;
