@@ -119,8 +119,6 @@ void boundaryKernel(double* u, double* v)
 
 	for (int f = 0; f < F / 8; ++f)
 	{ // central symmetry
-		if (f >= F / 8)
-			continue;
 		u[F / 8 + f] = u[f] = (u[F / 4 + f] + u[3 * F / 8 + f]) / 2;
 		v[F / 8 + f] = v[f] = (v[F / 4 + f] + v[3 * F / 8 + f]) / 2;
 	}
