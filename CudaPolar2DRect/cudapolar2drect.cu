@@ -16,8 +16,8 @@ using namespace std;
 #define chi 8
 #define au 1
 #define Bv 0.73
-#define R 40
-#define F 160
+#define R 60
+#define F 200
 #define dt 0.00005
 const double H_dr = 9 / (M_PI * R); /* 2pi(R*dr) = 360*dx (cartesian sim) */
 const double H_dr2 = H_dr * H_dr;
@@ -31,8 +31,12 @@ __constant__ double BASE_df;
 #define FRAME_DURATION 6
 //#define H 128
 //#define L 3456000
-#define L 72000
+#define L 3456000
 #define SNAPSHOT_STEP 3600
+
+
+#define BITMASK4 0xFFFFFFFC
+#define BITMASK2 0xFFFFFFFE
 
 // fp - f+1
 // fm - f-1
@@ -42,17 +46,13 @@ __device__
 inline double getNextU(
 	double u, double urp, double urm, double ufp, double ufm,
 	double v, double vrp, double vrm, double vfp, double vfm,
-	int r, double df
+	double ro, double df
 )
 {
 	double urp2 = (u + urp) / 2;
 	double urm2 = (u + urm) / 2;
 	double ufp2 = (u + ufp) / 2;
 	double ufm2 = (u + ufm) / 2;
-	//double ro = r * dr + dr;
-	//double rp2 = r * dr + 3 * dr / 2;
-	//double rm2 = r * dr + dr / 2;
-	double ro = r * dr;
 	double rp2 = ro + hdr;
 	double rm2 = ro - hdr;
 
@@ -71,13 +71,9 @@ __device__
 inline double getNextV(
 	double u,
 	double v, double vrp, double vrm, double vfp, double vfm,
-	int r, double df
+	double ro, double df
 )
 {
-	//double ro = r * dr + dr;
-	//double rp2 = r * dr + 3 * dr / 2;
-	//double rm2 = r * dr + dr / 2;
-	double ro = r * dr;
 	double rp2 = ro + hdr;
 	double rm2 = ro - hdr;
 
@@ -94,152 +90,108 @@ void boundaryKernel(double* u, double* v)
 	int fOffset = threadIdx.x + blockIdx.x * blockDim.x;
 	int fStride = blockDim.x * gridDim.x;
 
-	for (int f = fOffset; f < F; f += fStride)
-	{ // no-flux boundary condition
-		u[3 * R * F / 16 + (R / 2 - 1) * F + f] = (4 * u[3 * R * F / 16 + (R / 2 - 2) * F + f] - u[3 * R * F / 16 + (R / 2 - 3) * F + f]) / 3;
-		v[3 * R * F / 16 + (R / 2 - 1) * F + f] = (4 * v[3 * R * F / 16 + (R / 2 - 2) * F + f] - v[3 * R * F / 16 + (R / 2 - 3) * F + f]) / 3;
+	for (int f = fOffset; f < F / 2; f += fStride)
+	{
+		// no-flux boundary condition
+		u[(R - 1) * F + f] = (4 * u[(R - 2) * F + f] - u[(R - 3) * F + f]) / 3;
+		v[(R - 1) * F + f] = (4 * v[(R - 2) * F + f] - v[(R - 3) * F + f]) / 3;
+		// central symmetry boundary condition
+		if (f % 4 == 0) {
+			u[F / 2 + f] = u[f] = (u[F + f] + u[3 * F / 2 + f]) / 2;
+			v[F / 2 + f] = v[f] = (v[F + f] + v[3 * F / 2 + f]) / 2;
+		}
 	}
-
-
-	for (int f = fOffset; f < F / 8; f += fStride)
-	{ // central symmetry
-		u[F / 8 + f] = u[f] = (u[F / 4 + f] + u[3 * F / 8 + f]) / 2;
-		v[F / 8 + f] = v[f] = (v[F / 4 + f] + v[3 * F / 8 + f]) / 2;
+	for (int f = fOffset + F / 2; f < F; f += fStride)
+	{
+		// no-flux boundary condition
+		u[(R - 1) * F + f] = (4 * u[(R - 2) * F + f] - u[(R - 3) * F + f]) / 3;
+		v[(R - 1) * F + f] = (4 * v[(R - 2) * F + f] - v[(R - 3) * F + f]) / 3;
 	}
 }
 
 __global__
 void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput)
 {
-	int rOffset = threadIdx.x + blockIdx.x * blockDim.x;
+	int rOffset = threadIdx.x + blockIdx.x * blockDim.x + 1;
 	int rStride = blockDim.x * gridDim.x;
 	int fOffset = threadIdx.y + blockIdx.y * blockDim.y;
 	int fStride = blockDim.y * gridDim.y;
 
 	double urp, urm, vrp, vrm, ufp, ufm, vfp, vfm, u, v;
-	int fp, fm; // offsets
-	double df;
+	double df, ro;
+	int fp, fm;
 
-	for (int r = rOffset; r < R / 4; r += rStride)
+	for (int r = rOffset; r < R - 1; r += rStride)
 	{
-		// central symmetry boundary condition - skip r = 0
-		if(r==0)
-			continue;
-		df = BASE_df * 4;
-		for (int f = fOffset; f < F / 4; f += fStride)
-		{
-			u = uInput[r * F / 4 + f];
-			v = vInput[r * F / 4 + f];
-
-			if (f == 0) fm = r * F / 4 + F / 4 - 1;
-			else fm = r * F / 4 + f - 1;
-			if (f == F / 4 - 1) fp = r * F / 4;
-			else fp = r * F / 4 + f + 1;
-
-			ufp = uInput[fp];
-			vfp = vInput[fp];
-			ufm = uInput[fm];
-			vfm = vInput[fm];
-
-			urm = uInput[(r - 1) * F / 4 + f];
-			vrm = vInput[(r - 1) * F / 4 + f];
-
-			if (r == R / 4 - 1)
-			{
-				urp = (uInput[R * F / 16 + 2 * f] + uInput[R * F / 16 + 2 * f + 1]) / 2;
-				vrp = (vInput[R * F / 16 + 2 * f] + vInput[R * F / 16 + 2 * f + 1]) / 2;
-			}
-			else
-			{
-				urp = uInput[(r + 1) * F / 4 + f];
-				vrp = vInput[(r + 1) * F / 4 + f];
-			}
-
-			uOutput[r * F / 4 + f] = getNextU(u, urp, urm, ufp, ufm, v, vrp, vrm, vfp, vfm, r, df);
-			vOutput[r * F / 4 + f] = getNextV(u, v, vrp, vrm, vfp, vfm, r, df);
-		}
-	}
-
-	for (int r = rOffset + R / 4; r < R / 2; r += rStride)
-	{
-		df = BASE_df * 2;
-		for (int f = fOffset; f < F / 2; f += fStride)
-		{
-			u = uInput[R * F / 16 + (r - R / 4) * F / 2 + f];
-			v = vInput[R * F / 16 + (r - R / 4) * F / 2 + f];
-
-			if (f == 0) fm = R * F / 16 + (r - R / 4 + 1) * F / 2 - 1;
-			else fm = R * F / 16 + (r - R / 4) * F / 2 + f - 1;
-			if (f == F / 2 - 1) fp = R * F / 16 + (r - R / 4) * F / 2;
-			else fp = R * F / 16 + (r - R / 4) * F / 2 + f + 1;
-
-			ufp = uInput[fp];
-			vfp = vInput[fp];
-			ufm = uInput[fm];
-			vfm = vInput[fm];
-
-			if (r == R / 4)
-			{
-				urm = uInput[(r - 1) * F / 4 + f / 2] / 2;
-				vrm = vInput[(r - 1) * F / 4 + f / 2] / 2;
-			}
-			else
-			{
-				urm = uInput[R * F / 16 + (r - 1 - R / 4) * F / 2 + f];
-				vrm = vInput[R * F / 16 + (r - 1 - R / 4) * F / 2 + f];
-			}
-
-			if (r == R / 2 - 1)
-			{
-				urp = (uInput[3 * R * F / 16 + 2 * f] + uInput[3 * R * F / 16 + 2 * f + 1]) / 2;
-				vrp = (vInput[3 * R * F / 16 + 2 * f] + vInput[3 * R * F / 16 + 2 * f + 1]) / 2;
-			}
-			else
-			{
-				urp = uInput[R * F / 16 + (r + 1 - R / 4) * F / 2 + f];
-				vrp = vInput[R * F / 16 + (r + 1 - R / 4) * F / 2 + f];
-			}
-
-			uOutput[R * F / 16 + (r - R / 4) * F / 2 + f] = getNextU(u, urp, urm, ufp, ufm, v, vrp, vrm, vfp, vfm, r, df);
-			vOutput[R * F / 16 + (r - R / 4) * F / 2 + f] = getNextV(u, v, vrp, vrm, vfp, vfm, r, df);
-		}
-	}
-
-	for (int r = rOffset + R / 2; r < R - 1; r += rStride)
-	{
-		// no-flux boundary condition - skip r = R - 1
+		ro = r * dr;
 		for (int f = fOffset; f < F; f += fStride)
 		{
+			if (r < R / 4 && f % 4 != 0)
+				continue;
+			if (r < R / 2 && f % 2 != 0)
+				continue;
 
-			u = uInput[3 * R * F / 16 + (r - R / 2) * F + f];
-			v = vInput[3 * R * F / 16 + (r - R / 2) * F + f];
+			u = uInput[F * r + f];
+			v = vInput[F * r + f];
 
-			if (f == 0) fm = 3 * R * F / 16 + (r - R / 2 + 1) * F - 1;
-			else fm = 3 * R * F / 16 + (r - R / 2) * F + f - 1;
-			if (f == F - 1) fp = 3 * R * F / 16 + (r - R / 2) * F;
-			else fp = 3 * R * F / 16 + (r - R / 2) * F + f + 1;
-
-			ufp = uInput[fp];
-			vfp = vInput[fp];
-			ufm = uInput[fm];
-			vfm = vInput[fm];
-
-			if (r == R / 2)
-			{
-				urm = uInput[3 * R * F / 16 - F / 2 + f / 2] / 2;
-				vrm = vInput[3 * R * F / 16 - F / 2 + f / 2] / 2;
+			if (r == R / 4 - 1) {
+				urp = (uInput[F * (r + 1) + f] + uInput[F * (r + 1) + f + 2]) / 2;
+				vrp = (vInput[F * (r + 1) + f] + vInput[F * (r + 1) + f + 2]) / 2;
 			}
+			else if (r == R / 2 - 1) {
+				urp = (uInput[F * (r + 1) + f] + uInput[F * (r + 1) + f + 1]) / 2;
+				vrp = (vInput[F * (r + 1) + f] + vInput[F * (r + 1) + f + 1]) / 2;
+			}
+			else {
+				urp = uInput[F * (r + 1) + f];
+				vrp = vInput[F * (r + 1) + f];
+			}
+
+			if (r == R / 4) {
+				urm = uInput[F * (r - 1) + (f & BITMASK4)] / 2;
+				vrm = vInput[F * (r - 1) + (f & BITMASK4)] / 2;
+			}
+			else if (r == R / 2) {
+				urm = uInput[F * (r - 1) + (f & BITMASK2)] / 2;
+				vrm = vInput[F * (r - 1) + (f & BITMASK2)] / 2;
+			}
+			else {
+				urm = uInput[F * (r - 1) + f];
+				vrm = vInput[F * (r - 1) + f];
+			}
+
+			if (r < R / 4)
+				fp = f + 4;
+			else if (r < R / 2)
+				fp = f + 2;
 			else
-			{
-				urm = uInput[3 * R * F / 16 + (r - 1 - R / 2) * F + f];
-				vrm = vInput[3 * R * F / 16 + (r - 1 - R / 2) * F + f];
+				fp = f + 1;
+			if (fp >= F) fp = 0;
+			ufp = uInput[F * r + fp];
+			vfp = vInput[F * r + fp];
+
+			if (r < R / 4) {
+				fm = f - 4;
 			}
+			else if (r < R / 2) {
+				fm = f - 2;
+			}
+			else {
+				fm = f - 1;
+			}
+			if (fm < 0) fm += F;
+			ufm = uInput[F * r + fm];
+			vfm = vInput[F * r + fm];
 
-			urp = uInput[3 * R * F / 16 + (r + 1 - R / 2) * F + f];
-			vrp = vInput[3 * R * F / 16 + (r + 1 - R / 2) * F + f];
+			if (r < R / 4)
+				df = BASE_df * 4;
+			else if (r < R / 2)
+				df = BASE_df * 2;
+			else
+				df = BASE_df;
 
-			uOutput[3 * R * F / 16 + (r - R / 2) * F + f] = getNextU(u, urp, urm, ufp, ufm, v, vrp, vrm, vfp, vfm, r, BASE_df);
-			vOutput[3 * R * F / 16 + (r - R / 2) * F + f] = getNextV(u, v, vrp, vrm, vfp, vfm, r, BASE_df);
+			uOutput[F * r + f] = getNextU(u, urp, urm, ufp, ufm, v, vrp, vrm, vfp, vfm, ro, df);
+			vOutput[F * r + f] = getNextV(u, v, vrp, vrm, vfp, vfm, ro, df);
 		}
 	}
 }
@@ -247,7 +199,7 @@ void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput
 int main()
 {
 	double* matrixU1, * matrixU2, * matrixV1, * matrixV2;
-	int bufferlength = 11 * R * F / 16;
+	int bufferlength = R * F;
 	int size = bufferlength * sizeof(double);
 	double H_hdr = H_dr / 2;
 	cudaError_t cudaErr;
@@ -311,7 +263,7 @@ int main()
 	delete matrixVInit;
 
 	dim3 blocks(1, 10);
-	dim3 threads(16, 10);
+	dim3 threads(32, 20);
 
 	cudaGetLastError();
 	auto start = clock();
@@ -378,7 +330,7 @@ int main()
 	if (err) return err;
 	for (int j = 0; j <= L / SNAPSHOT_STEP; j++)
 	{
-		for (int i = 0; i < bufferlength; i++)
+		for (int i = 0; i < bufferlength; i+=4)
 		{
 			fprintf(csvu, "%f;", matrixU[j * bufferlength + i]);
 			fprintf(csvv, "%f;", matrixV[j * bufferlength + i]);

@@ -8,27 +8,37 @@
 #include <argh.h>
 #include <string>
 #include <vector>
-#include <libInterpolate/Interpolate.hpp>
+//#include <libInterpolate/Interpolate.hpp>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "CartesianToPolar.h"
+
+int getPos(int r, int f, int R, int F) {
+    if (r < R / 4)
+        return r * F / 4 + f;
+    else if (r < R / 2)
+        return R * F / 16 + (r - R / 4) * F / 2 + f;
+    else
+        return 3 * R * F / 16 + (r - R / 2) * F + f;
+}
 
 int main(int argc, char** argv)
 {
     argh::parser cmdl(argc, argv);
 
+    //--in=G:\programming\cuda\bak\Polar2DSingle\u.dat --out=u --radius=40 --circ=200 --mult=3 --max=4.2 --td=80 --tmin=0 --tmax=960
     std::string inFile = cmdl("--in").str();
     std::string outFile = cmdl("--out").str();
     int R = std::stoi(cmdl("--radius").str());
     int F = std::stoi(cmdl("--circ").str());
     int mul = std::stoi(cmdl("--mult").str());
-    double maxValue = std::stod(cmdl("--max").str());
-    int timeStepDelta = std::stoi(cmdl("--td").str());
-    int minTimeStep = std::stoi(cmdl("--tmin").str());
-    int maxTimeStep = std::stoi(cmdl("--tmax").str());
-    //int minTimeStep = 0;
-    //int maxTimeStep = 960;
-    //int timeStepDelta = 80;
+    double maxValue = R; //std::stod(cmdl("--max").str());
+    //int timeStepDelta = std::stoi(cmdl("--td").str());
+    //int minTimeStep = std::stoi(cmdl("--tmin").str());
+    //int maxTimeStep = std::stoi(cmdl("--tmax").str());
+    int minTimeStep = 0;
+    int maxTimeStep = 0;
+    int timeStepDelta = 80;
     double coef = 255.0 / maxValue;
 
     std::ifstream in;
@@ -46,6 +56,20 @@ int main(int argc, char** argv)
     in.close();
 
     double* input = (double*)memblock;
+
+    int idx = 0;
+    for (int r = 0; r < R; ++r) {
+        int fMax = r < R / 4 ? F / 4 : r < R / 2 ? F / 2 : F;
+        std::cout << "r: " + std::to_string(r) + ", fMax: " + std::to_string(fMax) << std::endl;
+        for (int f = 0; f < fMax / 4; ++f)
+            input[idx++] = (double)r;
+        for (int f = fMax / 4; f < fMax / 2; ++f)
+            input[idx++] = (double)R - r;
+        for (int f = fMax / 2; f < 3 * fMax / 4; ++f)
+            input[idx++] = (double)r;
+        for (int f = 3 * fMax / 4; f < fMax; ++f)
+            input[idx++] = (double)R - r;
+    }
 
     auto start = clock();
 
@@ -65,19 +89,24 @@ int main(int argc, char** argv)
         {
             for (int w = 0; w < imgSize; ++w)
             {
-                outBuffer[imgSize * h + w] = std::min(
-                    std::max(
-                        (int)std::lround(
-                            ctp.getValue(w, h, [=](int r, int f) {
-                                if (r < R / 4)
-                                    return input[timeOffset + r * F / 4 + f];
-                                else if (r < R / 2)
-                                    return input[timeOffset + R * F / 16 + (r - R / 4) * F / 2 + f];
-                                else
-                                    return input[timeOffset + 3 * R * F / 16 + (r - R / 2) * F + f];
-                                }) * coef),
-                        0),
-                    255);
+                int rawValue = (int)std::lround(ctp.getValue(w, h, [=](int r, int f) {
+                    if (r < R / 4)
+                        return input[timeOffset + r * F / 4 + f];
+                    else if (r < R / 2)
+                        return input[timeOffset + R * F / 16 + (r - R / 4) * F / 2 + f];
+                    else
+                        return input[timeOffset + 3 * R * F / 16 + (r - R / 2) * F + f];
+                    }) * coef);
+                if (w < imgSize / 2 && h < imgSize / 2) {
+                    int x = abs(w - imgSize / 2);
+                    int y = abs(h - imgSize / 2);
+                    int r = sqrt(x * x + y * y);
+                    if (r < 35 && rawValue < 150) {
+                        std::cout << "wat!";
+                    }
+                }
+                    
+                outBuffer[imgSize * h + w] = std::min(std::max(rawValue, 0), 255);
             }
         }
         elapsed = (clock() - start) / (double)CLOCKS_PER_SEC;

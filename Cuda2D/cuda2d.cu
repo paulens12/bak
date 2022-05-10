@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <iostream>
-#include "gd.h"
+#include <gd.h>
 #include <random>
 #include <chrono>
 

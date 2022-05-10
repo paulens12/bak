@@ -3,6 +3,7 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <functional>
 
 class CartesianToPolar
 {
@@ -30,6 +31,16 @@ private:
 		return true;
 	}
 
+	double getF(int f, int r) {
+		if (r < _maxR / 4)
+			return f / 4;
+		else if (r < _maxR / 2)
+			return f / 2;
+		else
+			return f;
+	}
+
+
 public:
 	CartesianToPolar(int maxR, int factor, int fSteps)
 	{
@@ -47,24 +58,23 @@ public:
 			for (int j = 0; j < _width; ++j)
 			{
 				x = (double)j / (double)factor - maxR;
-				if (!(_lookUpTable[i * _width + j].valid = polarToCartesian(&r, &fRad, x, y)))
+				_lookUpTable[i * _width + j].valid = polarToCartesian(&r, &fRad, x, y);
+				if (!_lookUpTable[i * _width + j].valid)
 					continue;
+				if (j == 113 && i == 91)
+					std::cout << "here!" << std::endl;
 
-				_lookUpTable[i * _width + j].rmin = r;
-				_lookUpTable[i * _width + j].rmax = _lookUpTable[i * _width + j].rmin + 1;
-				_lookUpTable[i * _width + j].rOffset = r - _lookUpTable[i * _width + j].rmin;
+				double meh;
+				int rmin = _lookUpTable[i * _width + j].rmin = r;
+				int rmax = _lookUpTable[i * _width + j].rmax = r + 1;
+				_lookUpTable[i * _width + j].rOffset = std::modf(r, &meh);
 
 				if (fRad < 0)
 					fRad += 2 * M_PI;
 
-				if (r < maxR / 4)
-					f = fRad * fSteps / (8 * M_PI);
-				else if (r < maxR / 2)
-					f = fRad * fSteps / (4 * M_PI);
-				else
-					f = fRad * fSteps / (2 * M_PI);
+				f = fRad * fSteps / (2 * M_PI);
 
-				_lookUpTable[i * _width + j].fmin = f;
+				_lookUpTable[i * _width + j].fmin = getF(f, rmin);
 				if (f < 0)
 					std::cout << "ERROR";
 				_lookUpTable[i * _width + j].fOffset = f - _lookUpTable[i * _width + j].fmin;
@@ -75,6 +85,11 @@ public:
 					_lookUpTable[i * _width + j].fmax = (_lookUpTable[i * _width + j].fmin + 1) % (fSteps / 2);
 				else
 					_lookUpTable[i * _width + j].fmax = (_lookUpTable[i * _width + j].fmin + 1) % fSteps;
+
+				// fmax, fmin should be multiplied only when using with rmax -- getValue()
+				if (rmax == maxR / 4 || rmax == maxR / 2)
+					_lookUpTable[i * _width + j].fmax *= 2;
+
 				if (f < 0 || _lookUpTable[i * _width + j].fmax >= fSteps)
 					std::cout << "ERROR";
 			}
