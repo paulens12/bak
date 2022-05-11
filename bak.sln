@@ -37,6 +37,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Cube", "Cube", "{4B81B2EB-A
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CubeCpp20", "CubeCpp20\CubeCpp20.vcxproj", "{D29D6648-92D2-4555-8A9E-9F152EEBA610}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CubeCuda", "CubeCuda\CubeCuda.vcxproj", "{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Constants\Constants.vcxitems*{7b8a69dc-631c-4971-9847-1bccac060223}*SharedItemsImports = 9
@@ -50,6 +52,7 @@ Global
 		Constants\Constants.vcxitems*{e05c2d78-4bdf-4c84-a3dd-e4cc81434314}*SharedItemsImports = 4
 		Polar2D\Polar2D.vcxitems*{e05c2d78-4bdf-4c84-a3dd-e4cc81434314}*SharedItemsImports = 4
 		Cube\Cube.vcxitems*{ede2fb91-db10-4523-a0fa-2854a389affe}*SharedItemsImports = 9
+		Constants\Constants.vcxitems*{ef817be0-1c5f-47b5-8cde-90f433eaf40d}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -138,6 +141,14 @@ Global
 		{D29D6648-92D2-4555-8A9E-9F152EEBA610}.Release|x64.Build.0 = Release|x64
 		{D29D6648-92D2-4555-8A9E-9F152EEBA610}.Release|x86.ActiveCfg = Release|Win32
 		{D29D6648-92D2-4555-8A9E-9F152EEBA610}.Release|x86.Build.0 = Release|Win32
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}.Debug|x64.ActiveCfg = Debug|x64
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}.Debug|x64.Build.0 = Debug|x64
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}.Debug|x86.ActiveCfg = Debug|x64
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}.Debug|x86.Build.0 = Debug|x64
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}.Release|x64.ActiveCfg = Release|x64
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}.Release|x64.Build.0 = Release|x64
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}.Release|x86.ActiveCfg = Release|x64
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -155,6 +166,7 @@ Global
 		{A8D40292-78E9-463E-9613-6D53EF619549} = {4B81B2EB-A504-4324-961F-F59049B97A5A}
 		{90FF9F9A-2C32-4AF0-92F3-1A53F7886E30} = {4B81B2EB-A504-4324-961F-F59049B97A5A}
 		{D29D6648-92D2-4555-8A9E-9F152EEBA610} = {4B81B2EB-A504-4324-961F-F59049B97A5A}
+		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D} = {4B81B2EB-A504-4324-961F-F59049B97A5A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C6E20160-C632-4237-89BB-CBCE66CFA889}

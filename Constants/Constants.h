@@ -3,23 +3,27 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-const double Du = 0.1;
-const double chi = 8.3;
-const double au = 1;
-const double Bv = 0.73;
-const double dt = 0.00005;
-const double gamma_o = 0.025;
-const double Do = 0.2;
-const double o0 = 1;
+#ifndef __device__
+#define __device__ /**/
+#endif
+
+__device__ const double Du = 0.1;
+__device__ const double chi = 8.3;
+__device__ const double au = 1;
+__device__ const double Bv = 0.73;
+__device__ const double dt = 0.00005;
+__device__ const double gamma_o = 0.025;
+__device__ const double Do = 0.2;
+__device__ const double o0 = 1;
 
 // cartesian
-const int X = 80;
-const int Y = 80;
-const int Z = 80;
-const int XY = X * Y;
-const double dx2 = 0.05 * 0.05;
-const double dy2 = 0.05 * 0.05;
-const double dz2 = 0.05 * 0.05;
+__device__ const int X = 80;
+__device__ const int Y = 80;
+__device__ const int Z = 80;
+__device__ const int XY = X * Y;
+__device__ const double dx2 = 0.075 * 0.075;
+__device__ const double dy2 = 0.075 * 0.075;
+__device__ const double dz2 = 0.075 * 0.075;
 
 // polar
 const int R = 40;

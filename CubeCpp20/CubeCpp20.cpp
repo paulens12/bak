@@ -17,7 +17,7 @@ using namespace std;
 //#define L 60000
 //#define SNAPSHOT_STEP 10000
 
-#define L 1000000
+#define L 20000
 #define SNAPSHOT_STEP 1000
 
 // perform one iteration of simulation
@@ -38,7 +38,7 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixO2, double* matri
 		if (i % SNAPSHOT_STEP == SNAPSHOT_STEP - 1)
 		{
 			int step = i / SNAPSHOT_STEP + 1;
-			//save frame
+			// save frame
 			clock_t saveframe = clock();
 
 			if (datustream.is_open())
@@ -48,10 +48,10 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixO2, double* matri
 			if (datostream.is_open())
 				datostream.write((char*)matrixO2, size);
 
-			for (int z : { 0, Z / 2, Z - 1 }) {
+			for (int z : { 0, Z / 4, Z / 2, 3 * Z / 4, Z - 1 }) {
 				savePNG(X, Y, &GET(matrixU2, 0, 0, z), 2, "u_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixV2, 0, 0, z), 1, "v_step" + to_string(step) + "_Z" + to_string(z) + ".png");
-				savePNG(X, Y, &GET(matrixO2, 0, 0, z), 1, "o_step" + to_string(step) + "_Z" + to_string(z) + ".png");
+				savePNG(X, Y, &GET(matrixO2, 0, 0, z), 2, "o_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 			}
 			double done = clock();
 

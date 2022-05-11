@@ -29,6 +29,11 @@ void savePNG(int maxX, int maxY, double* data, double maxValue, string filename)
 
 	for (int y = 0; y < maxY; y++) {
 		for (int x = 0; x < maxX; x++) {
+			if (!isfinite(data[x + y * maxX]) || data[x + y * maxX] < 0) {
+				cout << "X: " << x << " Y: " << y << " bad, file " << filename << "\n";
+				break;
+			}
+
 			gdImageSetPixel(im, x, y, colors[std::clamp(int(data[x + y * maxX] * 256 / maxValue), 0, 255)]);
 		}
 	}
