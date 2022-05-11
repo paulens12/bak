@@ -21,9 +21,9 @@ __device__ const int X = 80;
 __device__ const int Y = 80;
 __device__ const int Z = 80;
 __device__ const int XY = X * Y;
-__device__ const double dx2 = 0.075 * 0.075;
-__device__ const double dy2 = 0.075 * 0.075;
-__device__ const double dz2 = 0.075 * 0.075;
+__device__ const double dx2 = 0.05 * 0.05;
+__device__ const double dy2 = 0.05 * 0.05;
+__device__ const double dz2 = 0.05 * 0.05;
 
 // polar
 const int R = 40;

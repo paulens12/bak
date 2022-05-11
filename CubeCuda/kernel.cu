@@ -15,8 +15,8 @@
 
 using namespace std;
 
-#define L 20000
-#define SNAPSHOT_STEP 1000
+#define L 200000
+#define SNAPSHOT_STEP 10000
 
 __device__
 double getNextU(double* u, double* v, double* o, int x, int y, int z)
@@ -78,9 +78,6 @@ void calcPoint(double* uOutput, double* vOutput, double* oOutput, double* uInput
 __global__
 void calcKernel(double* uOutput, double* vOutput, double* oOutput, double* uInput, double* vInput, double* oInput)
 {
-	if (threadIdx.x + threadIdx.y + threadIdx.z + blockIdx.x + blockIdx.y + blockIdx.z == 0)
-		int a = threadIdx.x;
-
 	int xOffset = threadIdx.x + blockIdx.x * blockDim.x;
 	int xStride = blockDim.x * gridDim.x;
 	int yOffset = threadIdx.y + blockIdx.y * blockDim.y;
@@ -98,24 +95,16 @@ void calcKernel(double* uOutput, double* vOutput, double* oOutput, double* uInpu
 			}
 		}
 	}
-
-	if (threadIdx.x + threadIdx.y + threadIdx.z + blockIdx.x + blockIdx.y + blockIdx.z == 0)
-		int a = threadIdx.x;
 }
 
 // apply boundary conditions
 __global__
 void boundaryKernel(double* u, double* v, double* o)
 {
-	if (threadIdx.x + threadIdx.y + threadIdx.z + blockIdx.x + blockIdx.y + blockIdx.z == 0)
-		int a = threadIdx.x;
-
 	int xOffset = threadIdx.x + blockIdx.x * blockDim.x;
 	int xStride = blockDim.x * gridDim.x;
 	int yOffset = threadIdx.y + blockIdx.y * blockDim.y;
 	int yStride = blockDim.y * gridDim.y;
-	int zOffset = threadIdx.z + blockIdx.z * blockDim.z;
-	int zStride = blockDim.z * gridDim.z;
 
 	for (int y = yOffset + 1; y < Y - 1; y += yStride) {
 		for (int x = xOffset + 1; x < X - 1; x += xStride) {
@@ -126,7 +115,7 @@ void boundaryKernel(double* u, double* v, double* o)
 			GET(v, x, y, Z - 1) = fmax((4 * GET(v, x, y, Z - 2) - GET(v, x, y, Z - 3)) / 3.0, 0.0);
 			GET(o, x, y, Z - 1) = getNextO(u, o, o0, x, y, Z - 1);
 		}
-		for (int z = zOffset + 1; z < Z - 1; z += zStride) {
+		for (int z = xOffset + 1; z < Z - 1; z += xStride) {
 			GET(u, 0, y, z) = fmax((4 * GET(u, 1, y, z) - GET(u, 2, y, z)) / 3.0, 0.0);
 			GET(v, 0, y, z) = fmax((4 * GET(v, 1, y, z) - GET(v, 2, y, z)) / 3.0, 0.0);
 			GET(o, 0, y, z) = fmax((4 * GET(o, 1, y, z) - GET(o, 2, y, z)) / 3.0, 0.0);
@@ -135,7 +124,7 @@ void boundaryKernel(double* u, double* v, double* o)
 			GET(o, X - 1, y, z) = fmax((4 * GET(o, X - 2, y, z) - GET(o, X - 3, y, z)) / 3.0, 0.0);
 		}
 	}
-	for (int z = zOffset + 1; z < Z - 1; z += zStride) {
+	for (int z = yOffset + 1; z < Z - 1; z += yStride) {
 		for (int x = xOffset + 1; x < X - 1; x += xStride) {
 			GET(u, x, 0, z) = fmax((4 * GET(u, x, 1, z) - GET(u, x, 2, z)) / 3.0, 0.0);
 			GET(v, x, 0, z) = fmax((4 * GET(v, x, 1, z) - GET(v, x, 2, z)) / 3.0, 0.0);
@@ -145,9 +134,6 @@ void boundaryKernel(double* u, double* v, double* o)
 			GET(o, x, Y - 1, z) = fmax((4 * GET(o, x, Y - 2, z) - GET(o, x, Y - 3, z)) / 3.0, 0.0);
 		}
 	}
-
-	if (threadIdx.x + threadIdx.y + threadIdx.z + blockIdx.x + blockIdx.y + blockIdx.z == 0)
-		int a = threadIdx.x;
 }
 
 
@@ -195,6 +181,25 @@ int main()
 		matrixO[i] = o0;
 	}
 
+	ofstream datustream;
+	datustream.open("u.dat", ios::binary | ios::out);
+	ofstream datvstream;
+	datvstream.open("v.dat", ios::binary | ios::out);
+	ofstream datostream;
+	datostream.open("o.dat", ios::binary | ios::out);
+
+	if (datustream.is_open())
+		datustream.write((char*)matrixU, size);
+	if (datvstream.is_open())
+		datvstream.write((char*)matrixV, size);
+	if (datostream.is_open())
+		datostream.write((char*)matrixO, size);
+	for (int z : { 0, Z / 4, Z / 2, 3 * Z / 4, Z - 1 }) {
+		savePNG(X, Y, &GET(matrixU, 0, 0, z), 2, "u_step0_Z" + to_string(z) + ".png");
+		savePNG(X, Y, &GET(matrixV, 0, 0, z), 1, "v_step0_Z" + to_string(z) + ".png");
+		savePNG(X, Y, &GET(matrixO, 0, 0, z), 2, "o_step0_Z" + to_string(z) + ".png");
+	}
+
 	cudaMemcpy(matrixU1, matrixU, size, cudaMemcpyHostToDevice);
 	cudaMemcpy(matrixV1, matrixV, size, cudaMemcpyHostToDevice);
 	cudaMemcpy(matrixO1, matrixO, size, cudaMemcpyHostToDevice);
@@ -208,17 +213,10 @@ int main()
 	cudaDeviceGetAttribute(&multiProcessorCount, cudaDeviceAttr::cudaDevAttrMultiProcessorCount, deviceId);
 	cudaGetDeviceProperties(&props, deviceId);
 
-	ofstream datustream;
-	datustream.open("u.dat", ios::binary | ios::out);
-	ofstream datvstream;
-	datvstream.open("v.dat", ios::binary | ios::out);
-	ofstream datostream;
-	datostream.open("o.dat", ios::binary | ios::out);
-
 	// int threads_per_block = 8 * warpSize;
 	// int number_of_blocks = 32 * multiProcessorCount;
-	dim3 blocks(8, 8, 10);
-	dim3 threads(8, 4, 4);
+	dim3 blocks(5, 10, 10);
+	dim3 threads(16, 8, 8);
 
 	auto start = clock();
 	auto start_current = start;
@@ -231,15 +229,18 @@ int main()
 		if (err != cudaSuccess)
 			cout << "calcKernel: " << cudaGetErrorString(err) << endl;
 
-		boundaryKernel <<< 1, threads >>> (matrixU2, matrixV2, matrixO2);
+		boundaryKernel <<< dim3(10, 4), dim3(8, 4) >>> (matrixU2, matrixV2, matrixO2);
 		err = cudaGetLastError();
 		if (err != cudaSuccess)
 			cout << "boundaryKernel: " << cudaGetErrorString(err) << endl;
 
-		if (i % SNAPSHOT_STEP == SNAPSHOT_STEP - 1)
+		bool dbg = (i > 181000 && i < 181500);
+		if (i % SNAPSHOT_STEP == SNAPSHOT_STEP - 1 || dbg)
 		{
 			cudaDeviceSynchronize();
 			int step = i / SNAPSHOT_STEP + 1;
+			if (dbg)
+				step = i;
 
 			// save frame
 			clock_t saveframe = clock();
@@ -259,6 +260,14 @@ int main()
 				savePNG(X, Y, &GET(matrixU, 0, 0, z), 2, "u_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixV, 0, 0, z), 1, "v_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixO, 0, 0, z), 2, "o_step" + to_string(step) + "_Z" + to_string(z) + ".png");
+			}
+
+			if (dbg) {
+				for (int z = 0; z < Z; z++) {
+					savePNG(X, Y, &GET(matrixU, 0, 0, z), 2, "u_step" + to_string(step) + "_Z" + to_string(z) + ".png");
+					savePNG(X, Y, &GET(matrixV, 0, 0, z), 1, "v_step" + to_string(step) + "_Z" + to_string(z) + ".png");
+					savePNG(X, Y, &GET(matrixO, 0, 0, z), 2, "o_step" + to_string(step) + "_Z" + to_string(z) + ".png");
+				}
 			}
 			double done = clock();
 
