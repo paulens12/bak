@@ -157,9 +157,6 @@
     <ClCompile Include="RectPNG.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="conanfile.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="RectPNG.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
