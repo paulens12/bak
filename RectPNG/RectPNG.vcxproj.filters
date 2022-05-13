@@ -20,9 +20,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="conanfile.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="RectPNG.h">
       <Filter>Header Files</Filter>
     </ClInclude>
