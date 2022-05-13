@@ -6,9 +6,10 @@
 #include <random>
 #include <chrono>
 #include <thread>
-#include <Constants.h>
 #include <UV.h>
+#include <Constants.h>
 #include <barrier>
+#include "../PolarPNG/PolarPNG.h"
 
 using namespace std;
 
@@ -16,103 +17,53 @@ using namespace std;
 //#define L 60000
 //#define SNAPSHOT_STEP 10000
 
-#define L 60000
+#define L 6000000
 #define SNAPSHOT_STEP 10000
 
-void iterateNaive(double* matrixU2, double* matrixV2, double* matrixU1, double* matrixV1, double* matrixU, double* matrixV, int bufferlength, int size)
-{
-	cout << "naive" << endl;
-	atomic<int> done = 0;
-	bool cont[THREAD_N];
-	fill(cont, cont + THREAD_N, true);
-
-	auto start = clock();
-	double* temp = nullptr;
-
-	auto work = [&](int thrn) {
-		double ro;
-		for (int i = 0; i < L; i++) {
-			while (!cont[thrn]) {}
-			cont[thrn] = false;
-
-			for (int r = thrn + 1; r < R - 1; r += THREAD_N) {
-				ro = r * dr;
-				for (int f = 0; f < F; ++f) {
-					calcPoint(matrixU2, matrixV2, matrixU1, matrixV1, ro, r, f);
-				}
-			}
-			calcBoundary(matrixU2, matrixV2, thrn, THREAD_N);
-			done++;
-
-			if (thrn == 0) {
-				while (done != THREAD_N) {}
-				done = 0;
-
-				errno_t err;
-				if (i % SNAPSHOT_STEP == SNAPSHOT_STEP - 1)
-				{
-					int step = i / SNAPSHOT_STEP + 1;
-					//save frame
-					double elapsed = (clock() - start) / (double)CLOCKS_PER_SEC;
-					cout << "step " << step << ", time elapsed: " << elapsed << ", avg: " << elapsed / step << endl;
-					err = memcpy_s(matrixU + step * bufferlength, size, matrixU2, size);
-					if (err)
-						cout << "error: " << err << endl;
-					err = memcpy_s(matrixV + step * bufferlength, size, matrixV2, size);
-					if (err)
-						cout << "error: " << err << endl;
-				}
-
-				// pointer swap
-				temp = matrixU1;
-				matrixU1 = matrixU2;
-				matrixU2 = temp;
-
-				temp = matrixV1;
-				matrixV1 = matrixV2;
-				matrixV2 = temp;
-
-				for (int k = 0; k < THREAD_N; k++)
-					cont[k] = true;
-			}
-		}
-	};
-
-	thread* threads[THREAD_N]{};
-
-	for (int i = 0; i < THREAD_N; ++i) {
-		threads[i] = new thread(work, i);
-	}
-
-	for (thread* thr : threads) {
-		thr->join();
-		delete thr;
-	}
-
-	auto duration = (clock() - start) / (double)CLOCKS_PER_SEC;
-	cout << "duration: " << duration << endl;
-}
-
 // perform one iteration of simulation
-void iterate(double* matrixU2, double* matrixV2, double* matrixU1, double* matrixV1, double* matrixU, double* matrixV, int bufferlength, int size)
+void iterate(double* matrixU2, double* matrixV2, double* matrixU1, double* matrixV1, int bufferlength, int size)
 {
+	PolarPNG uPng(R, 3, F, 4.0);
+	PolarPNG vPng(R, 3, F, 2.0);
+
+	uPng.savePNG(matrixU1, "u_step0.png");
+	vPng.savePNG(matrixV1, "v_step0.png");
+
+	ofstream datustream;
+	datustream.open("u.dat", ios::binary | ios::out);
+	ofstream datvstream;
+	datvstream.open("v.dat", ios::binary | ios::out);
+
+	if (datustream.is_open())
+		datustream.write((char*)matrixU1, size);
+	if (datvstream.is_open())
+		datvstream.write((char*)matrixV1, size);
+
 	auto start = clock();
+	auto start_current = start;
 	int i = 0;
 	double* temp = nullptr;
-	barrier sync_point(THREAD_N, [&temp, bufferlength, size, matrixU, matrixV, &matrixU2, &matrixV2, &matrixU1, &matrixV1 , &i, start]() noexcept {
-		errno_t err;
+	barrier sync_point(THREAD_N, [&]() noexcept {
 		if (i % SNAPSHOT_STEP == SNAPSHOT_STEP - 1)
 		{
 			int step = i / SNAPSHOT_STEP + 1;
-			//save frame
-			double elapsed = (clock() - start) / (double)CLOCKS_PER_SEC;
-			cout << "step " << step << ", time elapsed: " << elapsed << ", avg: " << elapsed / step << endl;
-			err = memcpy_s(matrixU + step * bufferlength, size, matrixU2, size);
-			if (err)
-				cout << "error: " << err << endl;
-			err = memcpy_s(matrixV + step * bufferlength, size, matrixV2, size);
-			if (err)
-				cout << "error: " << err << endl;
+			// save frame
+			clock_t saveframe = clock();
+
+			if (datustream.is_open())
+				datustream.write((char*)matrixU2, size);
+			if (datvstream.is_open())
+				datvstream.write((char*)matrixV2, size);
+
+			uPng.savePNG(matrixU2, "u_step" + to_string(step) + ".png");
+			vPng.savePNG(matrixV2, "v_step" + to_string(step) + ".png");
+			double done = clock();
+
+			double processedIn = (saveframe - start_current) / (double)CLOCKS_PER_SEC;
+			double outputIn = (done - saveframe) / (double)CLOCKS_PER_SEC;
+			double totalTime = (done - start) / (double)CLOCKS_PER_SEC;
+			cout << "step " << step << ", done processing in: " << processedIn << ", saved snapshot in:" << outputIn << ", total: " << totalTime << ", avg: " << totalTime / step << endl;
+			start_current = clock();
 		}
 
 		// pointer swap
@@ -137,22 +88,6 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixU1, double* matri
 				}
 			}
 			calcBoundary(matrixU2, matrixV2, thrn, THREAD_N);
-			/*
-			// printf("i: %d\n", i);
-			int stride = THREAD_N * 4;
-			// divide matrix into stripes r=0..3, r=4..7, r=8..11 etc.
-			// each thread processes one stripe at a time
-			for (int stripeStart = thrn; stripeStart < R - 1; stripeStart += stride) {
-				int stripeEnd = min(R - 1, stripeStart + 4);
-				for (int r = stripeStart; r < stripeEnd; ++r) {
-					ro = r * dr;
-					for (int f = 0; f < F; ++f) {
-						calcPoint(matrixU2, matrixV2, matrixU1, matrixV1, ro, r, f);
-					}
-				}
-			}
-
-			*/
 			// end iteration
 			sync_point.arrive_and_wait();
 		}
@@ -183,65 +118,22 @@ int main()
 	matrixU2 = new double[bufferlength];
 	matrixV2 = new double[bufferlength];
 
-	errno_t err;
-
-	double* matrixU = new double[bufferlength * (L / SNAPSHOT_STEP + 1)]; // for gif output
-	double* matrixV = new double[bufferlength * (L / SNAPSHOT_STEP + 1)]; // for gif output
 	auto seed = chrono::system_clock::now().time_since_epoch().count();
 	normal_distribution<double> distr(0, 0.1);
-	default_random_engine re(1);
+	default_random_engine re(seed);
 
 	for (int i = 0; i < bufferlength; ++i)
 	{
 		if (i < bufferlength / 2 && i % 2 != 0 || i < bufferlength / 4 && i % 4 != 0)
-			matrixU[i] = matrixU1[i] = matrixU2[i] = 0;
+			matrixU1[i] = matrixU2[i] = 0;
 		else
-			matrixU[i] = matrixU1[i] = distr(re) + 1.0;
+			matrixU1[i] = distr(re) + 1.0;
 
-		matrixV[i] = matrixV1[i] = matrixV2[i] = 0;
+		matrixV1[i] = matrixV2[i] = 0;
 	}
 	calcBoundary(matrixU1, matrixV1);
-	calcBoundary(matrixU, matrixV);
 
-	iterate(matrixU2, matrixV2, matrixU1, matrixV1, matrixU, matrixV, bufferlength, size);
+	iterate(matrixU2, matrixV2, matrixU1, matrixV1, bufferlength, size);
 
-	//double maxU = 3.5;
-	//double maxV = 0.7;
-	//double multiU = 255 / maxU;
-	//double multiV = 255 / maxV;
-	ofstream datustream;
-	datustream.open("u.dat", ios::binary | ios::out);
-	if (datustream.is_open())
-	{
-		datustream.write((char*)matrixU, size * (L / SNAPSHOT_STEP + 1));
-		datustream.close();
-	}
-	ofstream datvstream;
-	datvstream.open("v.dat", ios::binary | ios::out);
-	if (datvstream.is_open())
-	{
-		datvstream.write((char*)matrixV, size * (L / SNAPSHOT_STEP + 1));
-		datvstream.close();
-	}
-
-	cout << "start csv" << endl;
-	FILE* csvu, * csvv;
-	err = fopen_s(&csvu, "u.csv", "w");
-	if (err) return err;
-	err = fopen_s(&csvv, "v.csv", "w");
-	if (err) return err;
-	for (int j = 0; j <= L / SNAPSHOT_STEP; j++)
-	{
-		for (int i = 0; i < bufferlength; i += 1)
-		{
-
-			fprintf(csvu, "%f;", matrixU[j * bufferlength + i]);
-			fprintf(csvv, "%f;", matrixV[j * bufferlength + i]);
-		}
-		fprintf(csvu, "\n");
-		fprintf(csvv, "\n");
-	}
-
-	fclose(csvu);
-	fclose(csvv);
+	delete[] matrixU1, matrixU2, matrixV1, matrixV2;
 }
