@@ -125,7 +125,7 @@ void calcPoint(double* uOutput, double* vOutput, double* uInput, double* vInput,
 		fm = f - 1;
 	}
 	if (fp >= F) fp = 0;
-	if (fm < 0) fm = F - 1;
+	if (fm < 0) fm += F;
 	ufp = uInput[F * r + fp];
 	vfp = vInput[F * r + fp];
 	ufm = uInput[F * r + fm];
