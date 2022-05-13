@@ -18,16 +18,19 @@
     <ClCompile Include="PolarPNG.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CartesianToPolar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\stb_image_write.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CartesianToPolar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="conanfile.txt" />
+    <ClInclude Include="PolarPNG.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
