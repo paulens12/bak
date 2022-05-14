@@ -90,9 +90,9 @@ __device__
 double calcBoundaryO(double* oInput, double u, double ro, int r, int f) {
 	// sparse array towards the center
 	if (r < R / 4 && f % 4 != 0)
-		return;
+		return 0.0;
 	if (r < R / 2 && f % 2 != 0)
-		return;
+		return 0.0;
 	double orm, df;
 	int fp, fm;
 
