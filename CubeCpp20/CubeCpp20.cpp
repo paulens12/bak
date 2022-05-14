@@ -48,7 +48,7 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixO2, double* matri
 			if (datostream.is_open())
 				datostream.write((char*)matrixO2, size);
 
-			for (int z : { 0, Z / 4, Z / 2, 3 * Z / 4, Z - 1 }) {
+			for (int z : { 0, Z_cube / 4, Z_cube / 2, 3 * Z_cube / 4, Z_cube - 1 }) {
 				savePNG(X, Y, &GET(matrixU2, 0, 0, z), 2, "u_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixV2, 0, 0, z), 1, "v_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixO2, 0, 0, z), 2, "o_step" + to_string(step) + "_Z" + to_string(z) + ".png");
@@ -76,7 +76,7 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixO2, double* matri
 
 	auto work = [&](int thrn) {
 		while (i < L) {
-			for (int z = 1; z < Z - 1; z++)
+			for (int z = 1; z < Z_cube - 1; z++)
 			{
 				for (int y = 1; y < Y - 1; y++)
 				{
@@ -113,7 +113,7 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixO2, double* matri
 
 int main()
 {
-	int bufferlength = X * Y * Z;
+	int bufferlength = X * Y * Z_cube;
 	int size = bufferlength * sizeof(double);
 	double* matrixU1 = new double[bufferlength];
 	double* matrixV1 = new double[bufferlength];

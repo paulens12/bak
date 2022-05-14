@@ -35,11 +35,11 @@ double getNextU(double* u, double* v, double* o, int x, int y, int z)
 	double DuMember =
 		(GET(u, x + 1, y, z) - 2 * GET(u, x, y, z) + GET(u, x - 1, y, z)) / dx2 +
 		(GET(u, x, y + 1, z) - 2 * GET(u, x, y, z) + GET(u, x, y - 1, z)) / dy2 +
-		(GET(u, x, y, z + 1) - 2 * GET(u, x, y, z) + GET(u, x, y, z - 1)) / dz2;
+		(GET(u, x, y, z + 1) - 2 * GET(u, x, y, z) + GET(u, x, y, z - 1)) / dz2_cube;
 	double ChiMember =
 		(uxp2 * (GET(v, x + 1, y, z) - GET(v, x, y, z)) - uxm2 * (GET(v, x, y, z) - GET(v, x - 1, y, z))) / dx2 +
 		(uyp2 * (GET(v, x, y + 1, z) - GET(v, x, y, z)) - uym2 * (GET(v, x, y, z) - GET(v, x, y - 1, z))) / dy2 +
-		(uzp2 * (GET(v, x, y, z + 1) - GET(v, x, y, z)) - uzm2 * (GET(v, x, y, z) - GET(v, x, y, z - 1))) / dz2;
+		(uzp2 * (GET(v, x, y, z + 1) - GET(v, x, y, z)) - uzm2 * (GET(v, x, y, z) - GET(v, x, y, z - 1))) / dz2_cube;
 	double aMember = GET(u, x, y, z) * (1 - GET(u, x, y, z) / GET(o, x, y, z));
 
 	return (Du * DuMember - chi * ChiMember + au * aMember) * dt + GET(u, x, y, z);
@@ -51,7 +51,7 @@ double getNextV(double* u, double* v, int x, int y, int z)
 	return (
 		(GET(v, x + 1, y, z) - 2 * GET(v, x, y, z) + GET(v, x - 1, y, z)) / dx2 +
 		(GET(v, x, y + 1, z) - 2 * GET(v, x, y, z) + GET(v, x, y - 1, z)) / dy2 +
-		(GET(v, x, y, z + 1) - 2 * GET(v, x, y, z) + GET(v, x, y, z - 1)) / dz2 +
+		(GET(v, x, y, z + 1) - 2 * GET(v, x, y, z) + GET(v, x, y, z - 1)) / dz2_cube +
 		GET(u, x, y, z) / (1 + Bv * GET(u, x, y, z)) - GET(v, x, y, z)
 		) * dt + GET(v, x, y, z);
 }
@@ -63,7 +63,7 @@ double getNextO(double* u, double* o, double o_z_plus_one, int x, int y, int z)
 		Do * (
 			(GET(o, x + 1, y, z) - 2 * GET(o, x, y, z) + GET(o, x - 1, y, z)) / dx2 +
 			(GET(o, x, y + 1, z) - 2 * GET(o, x, y, z) + GET(o, x, y - 1, z)) / dy2 +
-			(o_z_plus_one - 2 * GET(o, x, y, z) + GET(o, x, y, z - 1)) / dz2
+			(o_z_plus_one - 2 * GET(o, x, y, z) + GET(o, x, y, z - 1)) / dz2_cube
 			) -
 		gamma_o * GET(u, x, y, z)
 		) * dt + GET(o, x, y, z);
@@ -86,7 +86,7 @@ void calcKernel(double* uOutput, double* vOutput, double* oOutput, double* uInpu
 	int zOffset = threadIdx.z + blockIdx.z * blockDim.z;
 	int zStride = blockDim.z * gridDim.z;
 
-	for (int z = zOffset + 1; z < Z - 1; z += zStride)
+	for (int z = zOffset + 1; z < Z_cube - 1; z += zStride)
 	{
 		for (int y = yOffset + 1; y < Y - 1; y += yStride)
 		{
@@ -112,11 +112,11 @@ void boundaryKernel(double* u, double* v, double* o)
 			GET(u, x, y, 0) = fmax((4 * GET(u, x, y, 1) - GET(u, x, y, 2)) / 3.0, 0.0);
 			GET(v, x, y, 0) = fmax((4 * GET(v, x, y, 1) - GET(v, x, y, 2)) / 3.0, 0.0);
 			GET(o, x, y, 0) = fmax((4 * GET(o, x, y, 1) - GET(o, x, y, 2)) / 3.0, 0.0);
-			GET(u, x, y, Z - 1) = fmax((4 * GET(u, x, y, Z - 2) - GET(u, x, y, Z - 3)) / 3.0, 0.0);
-			GET(v, x, y, Z - 1) = fmax((4 * GET(v, x, y, Z - 2) - GET(v, x, y, Z - 3)) / 3.0, 0.0);
-			GET(o, x, y, Z - 1) = getNextO(u, o, o0, x, y, Z - 1);
+			GET(u, x, y, Z_cube - 1) = fmax((4 * GET(u, x, y, Z_cube - 2) - GET(u, x, y, Z_cube - 3)) / 3.0, 0.0);
+			GET(v, x, y, Z_cube - 1) = fmax((4 * GET(v, x, y, Z_cube - 2) - GET(v, x, y, Z_cube - 3)) / 3.0, 0.0);
+			GET(o, x, y, Z_cube - 1) = getNextO(u, o, o0, x, y, Z_cube - 1);
 		}
-		for (int z = xOffset + 1; z < Z - 1; z += xStride) {
+		for (int z = xOffset + 1; z < Z_cube - 1; z += xStride) {
 			GET(u, 0, y, z) = fmax((4 * GET(u, 1, y, z) - GET(u, 2, y, z)) / 3.0, 0.0);
 			GET(v, 0, y, z) = fmax((4 * GET(v, 1, y, z) - GET(v, 2, y, z)) / 3.0, 0.0);
 			GET(o, 0, y, z) = fmax((4 * GET(o, 1, y, z) - GET(o, 2, y, z)) / 3.0, 0.0);
@@ -125,7 +125,7 @@ void boundaryKernel(double* u, double* v, double* o)
 			GET(o, X - 1, y, z) = fmax((4 * GET(o, X - 2, y, z) - GET(o, X - 3, y, z)) / 3.0, 0.0);
 		}
 	}
-	for (int z = yOffset + 1; z < Z - 1; z += yStride) {
+	for (int z = yOffset + 1; z < Z_cube - 1; z += yStride) {
 		for (int x = xOffset + 1; x < X - 1; x += xStride) {
 			GET(u, x, 0, z) = fmax((4 * GET(u, x, 1, z) - GET(u, x, 2, z)) / 3.0, 0.0);
 			GET(v, x, 0, z) = fmax((4 * GET(v, x, 1, z) - GET(v, x, 2, z)) / 3.0, 0.0);
@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
 	cout << endl;
 	*/
 
-	int bufferlength = X * Y * Z;
+	int bufferlength = X * Y * Z_cube;
 	double* matrixU1, * matrixU2, * matrixV1, * matrixV2, * matrixO1, * matrixO2;
 	int size = bufferlength * sizeof(double);
 	err = cudaMalloc(&matrixU1, size);
@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
 		datvstream.write((char*)matrixV, size);
 	if (datostream.is_open())
 		datostream.write((char*)matrixO, size);
-	for (int z : { 0, Z / 4, Z / 2, 3 * Z / 4, Z - 1 }) {
+	for (int z : { 0, Z_cube / 4, Z_cube / 2, 3 * Z_cube / 4, Z_cube - 1 }) {
 		savePNG(X, Y, &GET(matrixU, 0, 0, z), 2, "u_step0_Z" + to_string(z) + ".png");
 		savePNG(X, Y, &GET(matrixV, 0, 0, z), 1, "v_step0_Z" + to_string(z) + ".png");
 		savePNG(X, Y, &GET(matrixO, 0, 0, z), 2, "o_step0_Z" + to_string(z) + ".png");
@@ -306,14 +306,14 @@ int main(int argc, char* argv[])
 			if (datostream.is_open())
 				datostream.write((char*)matrixO, size);
 
-			for (int z : { 0, Z / 4, Z / 2, 3 * Z / 4, Z - 1 }) {
+			for (int z : { 0, Z_cube / 4, Z_cube / 2, 3 * Z_cube / 4, Z_cube - 1 }) {
 				savePNG(X, Y, &GET(matrixU, 0, 0, z), 2, "u_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixV, 0, 0, z), 1, "v_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixO, 0, 0, z), 2, "o_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 			}
 
 			if (dbg) {
-				for (int z = 0; z < Z; z++) {
+				for (int z = 0; z < Z_cube; z++) {
 					savePNG(X, Y, &GET(matrixU, 0, 0, z), 2, "u_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 					savePNG(X, Y, &GET(matrixV, 0, 0, z), 1, "v_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 					savePNG(X, Y, &GET(matrixO, 0, 0, z), 2, "o_step" + to_string(step) + "_Z" + to_string(z) + ".png");

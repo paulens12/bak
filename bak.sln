@@ -43,6 +43,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Polar2DCuda", "Polar2DCuda\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Cylinder", "Cylinder", "{69600469-279F-4FBD-BB1F-A3A620A012AA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CylinderShared", "CylinderShared\CylinderShared.vcxitems", "{F2CF9883-BA30-4CD9-A6F3-0E570A605543}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CylinderCuda", "CylinderCuda\CylinderCuda.vcxproj", "{C7922CB0-55C6-41E2-B620-A8D862E7C205}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Constants\Constants.vcxitems*{7b8a69dc-631c-4971-9847-1bccac060223}*SharedItemsImports = 9
@@ -51,6 +55,7 @@ Global
 		Constants\Constants.vcxitems*{a8d40292-78e9-463e-9613-6d53ef619549}*SharedItemsImports = 4
 		Cube\Cube.vcxitems*{a8d40292-78e9-463e-9613-6d53ef619549}*SharedItemsImports = 4
 		Polar2DShared\Polar2D.vcxitems*{b5494006-f001-4946-87bd-da7fa5f2dab7}*SharedItemsImports = 9
+		Constants\Constants.vcxitems*{c7922cb0-55c6-41e2-b620-a8d862e7c205}*SharedItemsImports = 4
 		Constants\Constants.vcxitems*{d29d6648-92d2-4555-8a9e-9f152eeba610}*SharedItemsImports = 4
 		Cube\Cube.vcxitems*{d29d6648-92d2-4555-8a9e-9f152eeba610}*SharedItemsImports = 4
 		Constants\Constants.vcxitems*{e05c2d78-4bdf-4c84-a3dd-e4cc81434314}*SharedItemsImports = 4
@@ -58,6 +63,7 @@ Global
 		Constants\Constants.vcxitems*{eb77a916-2bfe-4e42-8751-addd634b3526}*SharedItemsImports = 4
 		Cube\Cube.vcxitems*{ede2fb91-db10-4523-a0fa-2854a389affe}*SharedItemsImports = 9
 		Constants\Constants.vcxitems*{ef817be0-1c5f-47b5-8cde-90f433eaf40d}*SharedItemsImports = 4
+		CylinderShared\CylinderShared.vcxitems*{f2cf9883-ba30-4cd9-a6f3-0e570a605543}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -162,6 +168,14 @@ Global
 		{EB77A916-2BFE-4E42-8751-ADDD634B3526}.Release|x64.Build.0 = Release|x64
 		{EB77A916-2BFE-4E42-8751-ADDD634B3526}.Release|x86.ActiveCfg = Release|x64
 		{EB77A916-2BFE-4E42-8751-ADDD634B3526}.Release|x86.Build.0 = Release|x64
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Debug|x64.ActiveCfg = Debug|x64
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Debug|x64.Build.0 = Debug|x64
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Debug|x86.ActiveCfg = Debug|x64
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Debug|x86.Build.0 = Debug|x64
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Release|x64.ActiveCfg = Release|x64
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Release|x64.Build.0 = Release|x64
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Release|x86.ActiveCfg = Release|x64
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -181,6 +195,8 @@ Global
 		{D29D6648-92D2-4555-8A9E-9F152EEBA610} = {4B81B2EB-A504-4324-961F-F59049B97A5A}
 		{EF817BE0-1C5F-47B5-8CDE-90F433EAF40D} = {4B81B2EB-A504-4324-961F-F59049B97A5A}
 		{EB77A916-2BFE-4E42-8751-ADDD634B3526} = {6014BC49-7E7A-4ED2-99A8-B1671ABDFD34}
+		{F2CF9883-BA30-4CD9-A6F3-0E570A605543} = {69600469-279F-4FBD-BB1F-A3A620A012AA}
+		{C7922CB0-55C6-41E2-B620-A8D862E7C205} = {69600469-279F-4FBD-BB1F-A3A620A012AA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C6E20160-C632-4237-89BB-CBCE66CFA889}

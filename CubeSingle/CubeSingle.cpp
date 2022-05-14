@@ -21,7 +21,7 @@ using namespace std;
 // perform one iteration of simulation
 void calcMatrix(double* uOutput, double* vOutput, double* oOutput, double* uInput, double* vInput, double* oInput)
 {
-	for (int z = 1; z < Z - 1; z++)
+	for (int z = 1; z < Z_cube - 1; z++)
 	{
 		for (int y = 1; y < Y - 1; y++)
 		{
@@ -35,7 +35,7 @@ void calcMatrix(double* uOutput, double* vOutput, double* oOutput, double* uInpu
 
 int main()
 {
-	int bufferlength = X * Y * Z;
+	int bufferlength = X * Y * Z_cube;
 	int size = bufferlength * sizeof(double);
 	double* matrixU1 = new double[bufferlength];
 	double* matrixV1 = new double[bufferlength];
@@ -92,7 +92,7 @@ int main()
 			if (datostream.is_open())
 				datostream.write((char*)matrixO2, size);
 
-			for (int z : { 0, Z / 2, Z - 1 }) {
+			for (int z : { 0, Z_cube / 2, Z_cube - 1 }) {
 				savePNG(X, Y, &GET(matrixU2, 0, 0, z), 2, "u_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixV2, 0, 0, z), 1, "v_step" + to_string(step) + "_Z" + to_string(z) + ".png");
 				savePNG(X, Y, &GET(matrixO2, 0, 0, z), 1, "o_step" + to_string(step) + "_Z" + to_string(z) + ".png");
