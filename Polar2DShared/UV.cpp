@@ -1,10 +1,17 @@
 #include <Constants.h>
 
+#ifdef CUDA
+#include "cuda_runtime.h"
+#endif
+
 // fp - f+1
 // fm - f-1
 // rp - r+1
 // rm - r-1
 // get next value of u
+#ifdef CUDA
+__device__
+#endif
 double getNextU(
 	double u, double urp, double urm, double ufp, double ufm,
 	double v, double vrp, double vrm, double vfp, double vfm,
@@ -32,6 +39,9 @@ double getNextU(
 }
 
 // get next value of v
+#ifdef CUDA
+__device__
+#endif
 double getNextV(
 	double u,
 	double v, double vrp, double vrm, double vfp, double vfm,
@@ -49,6 +59,9 @@ double getNextV(
 		) * dt + v;
 }
 
+#ifdef CUDA
+__device__
+#endif
 void calcPoint(double* uOutput, double* vOutput, double* uInput, double* vInput, double ro, int r, int f) {
 	double urp, urm, vrp, vrm, ufp, ufm, vfp, vfm, u, v;
 	double df;
@@ -63,45 +76,16 @@ void calcPoint(double* uOutput, double* vOutput, double* uInput, double* vInput,
 	u = uInput[F * r + f];
 	v = vInput[F * r + f];
 
-	//// urp, vrp
-	//if (r == R / 4 - 1) {
-	//	// average of two adjacent cells (still sparse, so skip one)
-	//	urp = (uInput[F * (r + 1) + f] + uInput[F * (r + 1) + f + 2]) / 2;
-	//	vrp = (vInput[F * (r + 1) + f] + vInput[F * (r + 1) + f + 2]) / 2;
-	//}
-	//else if (r == R / 2 - 1) {
-	//	// average of two adjacent cells
-	//	urp = (uInput[F * (r + 1) + f] + uInput[F * (r + 1) + f + 1]) / 2;
-	//	vrp = (vInput[F * (r + 1) + f] + vInput[F * (r + 1) + f + 1]) / 2;
-	//}
-	//else {
-		urp = uInput[F * (r + 1) + f];
-		vrp = vInput[F * (r + 1) + f];
-	//}
-
-	// urm, vrm
-	//if (r == R / 4) {
-	//	// f %= 4
-	//	urm = uInput[F * (r - 1) + (f % 4)];
-	//	vrm = vInput[F * (r - 1) + (f % 4)];
-	//}
-	//else if (r == R / 2) {
-	//	// f %= 2
-	//	urm = uInput[F * (r - 1) + (f % 2)];
-	//	vrm = vInput[F * (r - 1) + (f % 2)];
-	//}
-	//else {
-	//	urm = uInput[F * (r - 1) + f];
-	//	vrm = vInput[F * (r - 1) + f];
-	//}
+	urp = uInput[F * (r + 1) + f];
+	vrp = vInput[F * (r + 1) + f];
 
 	if (r == R / 4 && f % 4 == 2) {
-		urm = (uInput[F * (r - 1) + f - 2] + uInput[F * (r - 1) + f + 2]) / 2;
-		vrm = (vInput[F * (r - 1) + f - 2] + vInput[F * (r - 1) + f + 2]) / 2;
+		urm = (uInput[F * (r - 1) + f - 2] + uInput[F * (r - 1) + (f + 2) % F]) / 2;
+		vrm = (vInput[F * (r - 1) + f - 2] + vInput[F * (r - 1) + (f + 2) % F]) / 2;
 	}
-	else if (R == R / 2 && f % 2 == 1) {
-		urm = (uInput[F * (r - 1) + f - 1] + uInput[F * (r - 1) + f + 1]) / 2;
-		vrm = (vInput[F * (r - 1) + f - 1] + vInput[F * (r - 1) + f + 1]) / 2;
+	else if (r == R / 2 && f % 2 == 1) {
+		urm = (uInput[F * (r - 1) + f - 1] + uInput[F * (r - 1) + (f + 1) % F]) / 2;
+		vrm = (vInput[F * (r - 1) + f - 1] + vInput[F * (r - 1) + (f + 1) % F]) / 2;
 	}
 	else {
 		urm = uInput[F * (r - 1) + f];
@@ -144,23 +128,22 @@ void calcPoint(double* uOutput, double* vOutput, double* uInput, double* vInput,
 }
 
 // apply boundary conditions
+#ifdef CUDA
+__device__
+#endif
 void calcBoundary(double* u, double* v, int thrn = 0, int thread_n = 1)
 {
-	for (int f = thrn; f < F / 2; f += thread_n)
+	for (int f = thrn; f < F; f += thread_n)
 	{
 		// no-flux boundary condition
 		u[(R - 1) * F + f] = (4 * u[(R - 2) * F + f] - u[(R - 3) * F + f]) / 3;
 		v[(R - 1) * F + f] = (4 * v[(R - 2) * F + f] - v[(R - 3) * F + f]) / 3;
-		// central symmetry boundary condition
-		if (f % 4 == 0) {
-			u[F / 2 + f] = u[f] = (u[F + f] + u[3 * F / 2 + f]) / 2;
-			v[F / 2 + f] = v[f] = (v[F + f] + v[3 * F / 2 + f]) / 2;
-		}
 	}
-	for (int f = F / 2 + thrn; f < F; f += thread_n)
+
+	for (int f = thrn * 4; f < F / 2; f += thread_n * 4)
 	{
-		// no-flux boundary condition
-		u[(R - 1) * F + f] = (4 * u[(R - 2) * F + f] - u[(R - 3) * F + f]) / 3;
-		v[(R - 1) * F + f] = (4 * v[(R - 2) * F + f] - v[(R - 3) * F + f]) / 3;
+		// central symmetry boundary condition
+		u[F / 2 + f] = u[f] = (u[F + f] + u[3 * F / 2 + f]) / 2;
+		v[F / 2 + f] = v[f] = (v[F + f] + v[3 * F / 2 + f]) / 2;
 	}
 }

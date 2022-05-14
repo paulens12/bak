@@ -62,7 +62,7 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixU1, double* matri
 			double processedIn = (saveframe - start_current) / (double)CLOCKS_PER_SEC;
 			double outputIn = (done - saveframe) / (double)CLOCKS_PER_SEC;
 			double totalTime = (done - start) / (double)CLOCKS_PER_SEC;
-			cout << "step " << step << ", done processing in: " << processedIn << ", saved snapshot in:" << outputIn << ", total: " << totalTime << ", avg: " << totalTime / step << endl;
+			cout << "step " << step << ", done processing in: " << processedIn << ", saved snapshot in: " << outputIn << ", total: " << totalTime << ", avg: " << totalTime / step << endl;
 			start_current = clock();
 		}
 
@@ -120,12 +120,12 @@ int main()
 
 	auto seed = chrono::system_clock::now().time_since_epoch().count();
 	normal_distribution<double> distr(0, 0.1);
-	default_random_engine re(seed);
+	default_random_engine re(1);
 
 	for (int i = 0; i < bufferlength; ++i)
 	{
 		if (i < bufferlength / 2 && i % 2 != 0 || i < bufferlength / 4 && i % 4 != 0)
-			matrixU1[i] = matrixU2[i] = 0;
+			matrixU1[i] = matrixU2[i] = 0.0;
 		else
 			matrixU1[i] = distr(re) + 1.0;
 

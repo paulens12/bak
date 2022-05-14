@@ -1,36 +1,60 @@
 #pragma once
+#include <iostream>
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-
-#ifndef __device__
+#ifndef CUDA
+#define __constant__ /**/
 #define __device__ /**/
+#else
+#include "cuda_runtime.h"
 #endif
 
-__device__ const double Du = 0.1;
-__device__ const double chi = 8.3;
-__device__ const double au = 1;
-__device__ const double Bv = 0.73;
-__device__ const double dt = 0.00005;
-__device__ const double gamma_o = 0.025;
-__device__ const double Do = 0.2;
-__device__ const double o0 = 1;
+__constant__ const double Du = 0.1;
+__constant__ const double chi = 8.3;
+__constant__ const double au = 1;
+__constant__ const double Bv = 0.73;
+__constant__ const double dt = 0.000025;
+__constant__ const double gamma_o = 0.025;
+__constant__ const double Do = 0.2;
+__constant__ const double o0 = 1;
 
 // cartesian
-__device__ const int X = 80;
-__device__ const int Y = 80;
-__device__ const int Z = 80;
-__device__ const int XY = X * Y;
-__device__ const double dx2 = 0.05 * 0.05;
-__device__ const double dy2 = 0.05 * 0.05;
-__device__ const double dz2 = 0.05 * 0.05;
+__constant__ const int X = 64;
+__constant__ const int Y = 64;
+__constant__ const int Z = 64;
+__constant__ const int XY = X * Y;
+__constant__ const double dx2 = 0.125 * 0.125;
+__constant__ const double dy2 = 0.125 * 0.125;
+__constant__ const double dz2 = 0.125 * 0.125;
 
 // polar
-const int R = 40;
-const int F = 200;
-const double dr = 9 / (M_PI * R); /* 2pi(R*dr) = 360*dx, dx = 0.05 */
-const double hdr = dr / 2;
-const double dr2 = dr * dr;
-//#define dr (0.04774648292756860073066512901175) /* 3/(20pi) */
-//#define dr2 (0.00227972663195259985748728792222) /* dr * dr */
-const double BASE_df = 2 * M_PI / F;
+#define R_abs 4
+#define R 40  /* %4 == 1 */
+#define F 224 /* %8 == 1 */
+#ifdef CUDA
+	__constant__ double dr = 0.0;
+	__constant__ double hdr = 0.0;
+	__constant__ double dr2 = 0.0;
+	__constant__ double BASE_df = 0.0;
+
+	void initializeCudaConstants() {
+		double l_dr = (double)R_abs / R;
+		std::cout << l_dr << std::endl;
+		double l_hdr = l_dr / 2;
+		double l_dr2 = l_dr * l_dr;
+		double df = 2 * 3.14159265358979323846 / F;
+		cudaMemcpyToSymbol(dr, &l_dr, sizeof(double));
+		cudaMemcpyToSymbol(hdr, &l_hdr, sizeof(double));
+		cudaMemcpyToSymbol(dr2, &l_dr2, sizeof(double));
+		cudaMemcpyToSymbol(BASE_df, &df, sizeof(double));
+
+		l_dr = 0;
+		std::cout << l_dr << std::endl;
+		cudaMemcpyFromSymbol(&l_dr, dr, sizeof(double));
+		std::cout << l_dr << std::endl;
+	}
+#else
+	const double dr = (double)R_abs / R;
+	const double hdr = dr / 2;
+	const double dr2 = dr * dr;
+	const double BASE_df = 2 * 3.14159265358979323846 / F;
+#endif

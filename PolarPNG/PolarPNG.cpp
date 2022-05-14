@@ -14,27 +14,31 @@ PolarPNG::PolarPNG(int maxR, int factor, int fSteps, double maxValue) :_ctp(maxR
 	_maxValue = maxValue;
 	_maxR = maxR;
 	_fSteps = fSteps;
-	_buffer = new double[maxR * fSteps];
 }
 
-void PolarPNG::savePNG(double* data, std::string filename)
-{
-	memcpy(_buffer, data, sizeof(double) * _fSteps * _maxR);
-
+double* PolarPNG::fillBlanks(double* data) {
+	double* buffer = new double[_fSteps * _maxR];
+	memcpy(buffer, data, sizeof(double) * _fSteps * _maxR);
 	for (int r = 0; r < _maxR / 4; r++) {
-		for (int f = 0; f < _fSteps; f += 4) {
-			double begin = _buffer[r * _fSteps + f];
-			double end = _buffer[r * _fSteps + (f + 4) % _fSteps];
-			double mid = _buffer[r * _fSteps + f + 2] = (begin + end) / 2;
-			_buffer[r * _fSteps + f + 1] = (begin + mid) / 2;
-			_buffer[r * _fSteps + f + 3] = (end + mid) / 2;
+		for (int f = 0; f < _fSteps - 3; f += 4) {
+			double begin = buffer[r * _fSteps + f];
+			double end = buffer[r * _fSteps + (f + 4) % _fSteps];
+			double mid = buffer[r * _fSteps + f + 2] = (begin + end) / 2;
+			buffer[r * _fSteps + f + 1] = (begin + mid) / 2;
+			buffer[r * _fSteps + f + 3] = (end + mid) / 2;
 		}
 	}
 	for (int r = _maxR / 4; r < _maxR / 2; r++) {
 		for (int f = 0; f < _fSteps; f += 2) {
-			_buffer[r * _fSteps + f + 1] = (_buffer[r * _fSteps + f] + _buffer[r * _fSteps + (f + 2) % _fSteps]) / 2;
+			buffer[r * _fSteps + f + 1] = (buffer[r * _fSteps + f] + buffer[r * _fSteps + (f + 2) % _fSteps]) / 2;
 		}
 	}
+	return buffer;
+}
+
+void PolarPNG::savePNG(double* data, std::string filename)
+{
+	double* buffer = fillBlanks(data);
 
 	int imgSize = _ctp.getWidth();
 
@@ -46,7 +50,7 @@ void PolarPNG::savePNG(double* data, std::string filename)
 	for (int y = 0; y < imgSize; y++) {
 		bool coutOnError = true;
 		for (int x = 0; x < imgSize; x++) {
-			double val = _ctp.getValue(_buffer, x, y);
+			double val = _ctp.getValue(buffer, x, y);
 			if (coutOnError && (!isfinite(val) || val < 0)) {
 				std::cout << "X: " << x << " Y: " << y << " bad, file " << filename << std::endl;
 				//*(int*)0 = 0; // force crash
@@ -55,6 +59,8 @@ void PolarPNG::savePNG(double* data, std::string filename)
 			gdImageSetPixel(im, x, y, colors[std::clamp(int(val * 256 / _maxValue), 0, 255)]);
 		}
 	}
+
+	delete[] buffer;
 
 	FILE* pngout;
 	errno_t err = fopen_s(&pngout, filename.c_str(), "wb");
@@ -68,7 +74,9 @@ void PolarPNG::savePNG(double* data, std::string filename)
 	gdImageDestroy(im);
 }
 
-PolarPNG::~PolarPNG()
+void PolarPNG::saveFlat(double* data, std::string filename)
 {
-	delete[] _buffer;
+	double* buffer = fillBlanks(data);
+
+	delete[] buffer;
 }

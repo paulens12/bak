@@ -58,7 +58,7 @@
   </ImportGroup>
   <ImportGroup Label="Shared">
     <Import Project="..\Constants\Constants.vcxitems" Label="Shared" />
-    <Import Project="..\Polar2D\Polar2D.vcxitems" Label="Shared" />
+    <Import Project="..\Polar2DShared\Polar2D.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -80,7 +80,7 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -150,6 +150,14 @@
     <ProjectReference Include="..\PolarPNG\PolarPNG.vcxproj">
       <Project>{dd95d566-3885-46ea-a312-32d9be9fa235}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Update="E:\programming\cuda\bak\Polar2DShared\UV.cpp">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="E:\programming\cuda\bak\Polar2DShared\UV.cu">
+      <FileType>Document</FileType>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

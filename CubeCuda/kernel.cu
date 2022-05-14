@@ -10,12 +10,13 @@
 #include <chrono>
 #include "Constants.h"
 #include "../RectPNG/RectPNG.h"
+#include "argh.h"
 
 #define GET(arr, x, y, z) (arr[(x) + (y) * X + (z) * XY])
 
 using namespace std;
 
-#define L 200000
+#define L 5000000
 #define SNAPSHOT_STEP 10000
 
 __device__
@@ -136,13 +137,61 @@ void boundaryKernel(double* u, double* v, double* o)
 	}
 }
 
-
-int main()
+int main(int argc, char* argv[])
 {
+	cudaError_t err;
+	/*
+	double tmp;
+	argh::parser cmdl(argc, argv);
+	err = cudaMemcpyFromSymbol(&tmp, Du, sizeof(double), 0, cudaMemcpyDeviceToHost);
+	if (err != cudaSuccess)
+		cout << "cudaMemcpyFromSymbol: " << cudaGetErrorString(err) << endl;
+	cmdl("Du", tmp) >> tmp;
+	cout << "Du " << tmp;
+	err = cudaMemcpyToSymbol(Du, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess)
+		cout << "cudaMemcpyToSymbol: " << cudaGetErrorString(err) << endl;
+
+	cudaMemcpyFromSymbol(&tmp, chi, sizeof(double), 0, cudaMemcpyDeviceToHost);
+	cmdl("chi", tmp) >> tmp;
+	cout << " chi " << tmp;
+	err = cudaMemcpyToSymbol(chi, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess)
+		cout << "cudaMemcpyToSymbol: " << cudaGetErrorString(err) << endl;
+
+	cudaMemcpyFromSymbol(&tmp, au, sizeof(double), 0, cudaMemcpyDeviceToHost);
+	cmdl("au", tmp) >> tmp;
+	cout << " au " << tmp;
+	cudaMemcpyToSymbol(au, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+
+	cudaMemcpyFromSymbol(&tmp, Bv, sizeof(double), 0, cudaMemcpyDeviceToHost);
+	cmdl("Bv", tmp) >> tmp;
+	cout << " Bv " << tmp;
+	cudaMemcpyToSymbol(Bv, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+
+	cudaMemcpyFromSymbol(&tmp, gamma_o, sizeof(double), 0, cudaMemcpyDeviceToHost);
+	cmdl("go", tmp) >> tmp;
+	cout << " gamma_o " << tmp;
+	cudaMemcpyToSymbol(gamma_o, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+
+	cudaMemcpyFromSymbol(&tmp, Do, sizeof(double), 0, cudaMemcpyDeviceToHost);
+	cmdl("Do", tmp) >> tmp;
+	cout << " Do " << tmp;
+	cudaMemcpyToSymbol(Do, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+
+	cudaMemcpyFromSymbol(&tmp, dx2, sizeof(double), 0, cudaMemcpyDeviceToHost);
+	cmdl("dx", sqrt(tmp)) >> tmp; tmp *= tmp;
+	cout << " dx2 " << tmp;
+	cudaMemcpyToSymbol(dx2, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbol(dy2, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbol(dz2, &tmp, sizeof(double), 0, cudaMemcpyHostToDevice);
+
+	cout << endl;
+	*/
+
 	int bufferlength = X * Y * Z;
 	double* matrixU1, * matrixU2, * matrixV1, * matrixV2, * matrixO1, * matrixO2;
 	int size = bufferlength * sizeof(double);
-	cudaError_t err;
 	err = cudaMalloc(&matrixU1, size);
 	if (err != cudaSuccess)
 		cout << "cudaMalloc: " << cudaGetErrorString(err) << endl;
@@ -173,6 +222,7 @@ int main()
 	cout << size * (L / SNAPSHOT_STEP + 1) << endl;
 	auto seed = chrono::system_clock::now().time_since_epoch().count();
 	normal_distribution<double> distr(0, 0.1);
+	cout << seed << endl;
 	default_random_engine re(1);
 	for (int i = 0; i < bufferlength; i++)
 	{
@@ -234,7 +284,7 @@ int main()
 		if (err != cudaSuccess)
 			cout << "boundaryKernel: " << cudaGetErrorString(err) << endl;
 
-		bool dbg = (i > 181000 && i < 181500);
+		bool dbg = false; // (i > 530000 && i < 530100);
 		if (i % SNAPSHOT_STEP == SNAPSHOT_STEP - 1 || dbg)
 		{
 			cudaDeviceSynchronize();
