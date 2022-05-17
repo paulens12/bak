@@ -47,13 +47,23 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CylinderShared", "CylinderS
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CylinderCuda", "CylinderCuda\CylinderCuda.vcxproj", "{C7922CB0-55C6-41E2-B620-A8D862E7C205}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CylinderSingle", "CylinderSingle\CylinderSingle.vcxproj", "{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CylinderCpp20", "CylinderCpp20\CylinderCpp20.vcxproj", "{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PolarPNGApp", "PolarPNGApp\PolarPNGApp.vcxproj", "{D497C171-53D6-43C3-B40F-9436F27FEB74}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Constants\Constants.vcxitems*{21365bbe-0c1c-4d3e-8d0c-47a7b5e37791}*SharedItemsImports = 4
+		CylinderShared\CylinderShared.vcxitems*{21365bbe-0c1c-4d3e-8d0c-47a7b5e37791}*SharedItemsImports = 4
 		Constants\Constants.vcxitems*{7b8a69dc-631c-4971-9847-1bccac060223}*SharedItemsImports = 9
 		Constants\Constants.vcxitems*{83c606fb-767a-4a98-be76-29bfecb6df0d}*SharedItemsImports = 4
 		Polar2DShared\Polar2D.vcxitems*{83c606fb-767a-4a98-be76-29bfecb6df0d}*SharedItemsImports = 4
 		Constants\Constants.vcxitems*{a8d40292-78e9-463e-9613-6d53ef619549}*SharedItemsImports = 4
 		Cube\Cube.vcxitems*{a8d40292-78e9-463e-9613-6d53ef619549}*SharedItemsImports = 4
+		Constants\Constants.vcxitems*{ac7ee0d7-c50c-4d07-8458-6e7f12a04147}*SharedItemsImports = 4
+		CylinderShared\CylinderShared.vcxitems*{ac7ee0d7-c50c-4d07-8458-6e7f12a04147}*SharedItemsImports = 4
 		Polar2DShared\Polar2D.vcxitems*{b5494006-f001-4946-87bd-da7fa5f2dab7}*SharedItemsImports = 9
 		Constants\Constants.vcxitems*{c7922cb0-55c6-41e2-b620-a8d862e7c205}*SharedItemsImports = 4
 		Constants\Constants.vcxitems*{d29d6648-92d2-4555-8a9e-9f152eeba610}*SharedItemsImports = 4
@@ -176,6 +186,30 @@ Global
 		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Release|x64.Build.0 = Release|x64
 		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Release|x86.ActiveCfg = Release|x64
 		{C7922CB0-55C6-41E2-B620-A8D862E7C205}.Release|x86.Build.0 = Release|x64
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}.Debug|x64.ActiveCfg = Debug|x64
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}.Debug|x64.Build.0 = Debug|x64
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}.Debug|x86.ActiveCfg = Debug|Win32
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}.Debug|x86.Build.0 = Debug|Win32
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}.Release|x64.ActiveCfg = Release|x64
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}.Release|x64.Build.0 = Release|x64
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}.Release|x86.ActiveCfg = Release|Win32
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791}.Release|x86.Build.0 = Release|Win32
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}.Debug|x64.ActiveCfg = Debug|x64
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}.Debug|x64.Build.0 = Debug|x64
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}.Debug|x86.ActiveCfg = Debug|Win32
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}.Debug|x86.Build.0 = Debug|Win32
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}.Release|x64.ActiveCfg = Release|x64
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}.Release|x64.Build.0 = Release|x64
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}.Release|x86.ActiveCfg = Release|Win32
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147}.Release|x86.Build.0 = Release|Win32
+		{D497C171-53D6-43C3-B40F-9436F27FEB74}.Debug|x64.ActiveCfg = Debug|x64
+		{D497C171-53D6-43C3-B40F-9436F27FEB74}.Debug|x64.Build.0 = Debug|x64
+		{D497C171-53D6-43C3-B40F-9436F27FEB74}.Debug|x86.ActiveCfg = Debug|Win32
+		{D497C171-53D6-43C3-B40F-9436F27FEB74}.Debug|x86.Build.0 = Debug|Win32
+		{D497C171-53D6-43C3-B40F-9436F27FEB74}.Release|x64.ActiveCfg = Release|x64
+		{D497C171-53D6-43C3-B40F-9436F27FEB74}.Release|x64.Build.0 = Release|x64
+		{D497C171-53D6-43C3-B40F-9436F27FEB74}.Release|x86.ActiveCfg = Release|Win32
+		{D497C171-53D6-43C3-B40F-9436F27FEB74}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -197,6 +231,9 @@ Global
 		{EB77A916-2BFE-4E42-8751-ADDD634B3526} = {6014BC49-7E7A-4ED2-99A8-B1671ABDFD34}
 		{F2CF9883-BA30-4CD9-A6F3-0E570A605543} = {69600469-279F-4FBD-BB1F-A3A620A012AA}
 		{C7922CB0-55C6-41E2-B620-A8D862E7C205} = {69600469-279F-4FBD-BB1F-A3A620A012AA}
+		{21365BBE-0C1C-4D3E-8D0C-47A7B5E37791} = {69600469-279F-4FBD-BB1F-A3A620A012AA}
+		{AC7EE0D7-C50C-4D07-8458-6E7F12A04147} = {69600469-279F-4FBD-BB1F-A3A620A012AA}
+		{D497C171-53D6-43C3-B40F-9436F27FEB74} = {69600469-279F-4FBD-BB1F-A3A620A012AA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C6E20160-C632-4237-89BB-CBCE66CFA889}
