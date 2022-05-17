@@ -18,7 +18,7 @@
 using namespace std;
 
 #define L 6000000
-#define SNAPSHOT_STEP 1000
+#define SNAPSHOT_STEP 10000
 
 __global__
 void calcKernel(double* uOutput, double* vOutput, double* oOutput, double* uInput, double* vInput, double* oInput)
@@ -28,31 +28,40 @@ void calcKernel(double* uOutput, double* vOutput, double* oOutput, double* uInpu
 	int yOffset = threadIdx.y + blockIdx.y * blockDim.y;
 	int yStride = blockDim.y * gridDim.y;
 
-	for (int z = 1 + xOffset; z < Z - 1; z += xStride) {
+	for (int z = 1 + xOffset; z < Z; z += xStride) {
 		for (int r = 1; r < R / 4; ++r) {
 			double ro = r * dr;
 			for (int f = yOffset * 4; f < F; f += yStride * 4) {
-				calcPoint(uOutput, vOutput, oOutput, uInput, vInput, oInput, ro, r, f, z);
+				if (z == Z - 1)
+					oOutput[R * F * (Z - 1) + F * r + f] = calcBoundaryO(oInput, uInput[R * F * (Z - 1) + F * r + f], ro, r, f);
+				else
+					calcPoint(uOutput, vOutput, oOutput, uInput, vInput, oInput, ro, r, f, z);
 			}
 		}
 
 		for (int r = R / 4; r < R / 2; ++r) {
 			double ro = r * dr;
 			for (int f = yOffset * 2; f < F; f += yStride * 2) {
-				calcPoint(uOutput, vOutput, oOutput, uInput, vInput, oInput, ro, r, f, z);
+				if (z == Z - 1)
+					oOutput[R * F * (Z - 1) + F * r + f] = calcBoundaryO(oInput, uInput[R * F * (Z - 1) + F * r + f], ro, r, f);
+				else
+					calcPoint(uOutput, vOutput, oOutput, uInput, vInput, oInput, ro, r, f, z);
 			}
 		}
 
 		for (int r = R / 2; r < R; ++r) {
 			double ro = r * dr;
 			for (int f = yOffset; f < F; f += yStride) {
-				if (Z == Z - 1)
-					calcBoundaryO(oInput, uInput[R * F * (Z - 1) + F * r + f], ro, r, f);
+				if (z == Z - 1) {
+					if(r < R - 1)
+						oOutput[R * F * (Z - 1) + F * r + f] = calcBoundaryO(oInput, uInput[R * F * (Z - 1) + F * r + f], ro, r, f);
+				}
 				else
 					calcPoint(uOutput, vOutput, oOutput, uInput, vInput, oInput, ro, r, f, z);
 			}
 		}
 	}
+
 }
 
 // apply boundary conditions
@@ -133,7 +142,7 @@ int main(int argc, char* argv[])
 	cudaMemcpy(matrixV2, matrixV, size, cudaMemcpyHostToDevice);
 	cudaMemcpy(matrixO2, matrixO, size, cudaMemcpyHostToDevice);
 
-	dim3 boundaryBlocks(1, 1);
+	dim3 boundaryBlocks(28, 1);
 	dim3 boundaryThreads(1, 32);
 	dim3 calcBlocks(2, 14);
 	dim3 calcThreads(32, 1);
@@ -238,6 +247,10 @@ int main(int argc, char* argv[])
 		temp = matrixV1;
 		matrixV1 = matrixV2;
 		matrixV2 = temp;
+
+		temp = matrixO1;
+		matrixO1 = matrixO2;
+		matrixO2 = temp;
 	}
 	auto duration = (clock() - start) / (double)CLOCKS_PER_SEC;
 	cout << "duration: " << duration << endl;

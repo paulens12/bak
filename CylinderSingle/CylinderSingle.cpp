@@ -15,7 +15,7 @@ using namespace std;
 //#define SNAPSHOT_STEP 10000
 
 #define L 6000000
-#define SNAPSHOT_STEP 1000
+#define SNAPSHOT_STEP 10000
 
 
 // perform one iteration of simulation
@@ -29,8 +29,10 @@ void calcMatrix(double* uOutput, double* vOutput, double* oOutput, double* uInpu
 			ro = r * dr;
 			for (int f = 0; f < F; ++f)
 			{
-				if(z == Z - 1)
-					oOutput[R * F * (Z - 1) + F * r + f] = calcBoundaryO(oInput, uInput[R * F * (Z - 1) + F * r + f], ro, r, f);
+				if (z == Z - 1) {
+					if (r < R - 1)
+						oOutput[R * F * (Z - 1) + F * r + f] = calcBoundaryO(oInput, uInput[R * F * (Z - 1) + F * r + f], ro, r, f);
+				}
 				else
 					calcPoint(uOutput, vOutput, oOutput, uInput, vInput, oInput, ro, r, f, z);
 			}
@@ -49,8 +51,6 @@ int main()
 	matrixU2 = new double[bufferlength];
 	matrixV2 = new double[bufferlength];
 	matrixO2 = new double[bufferlength];
-
-	errno_t err;
 
 	auto seed = chrono::system_clock::now().time_since_epoch().count();
 	normal_distribution<double> distr(0, 0.1);
@@ -142,6 +142,10 @@ int main()
 		temp = matrixV1;
 		matrixV1 = matrixV2;
 		matrixV2 = temp;
+
+		temp = matrixO1;
+		matrixO1 = matrixO2;
+		matrixO2 = temp;
 	}
 	auto duration = (clock() - start) / (double)CLOCKS_PER_SEC;
 	cout << "duration: " << duration << endl;

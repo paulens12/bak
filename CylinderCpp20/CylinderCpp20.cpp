@@ -89,6 +89,10 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixO2, double* matri
 		matrixV1 = matrixV2;
 		matrixV2 = temp;
 
+		temp = matrixO1;
+		matrixO1 = matrixO2;
+		matrixO2 = temp;
+
 		++i;
 		});
 
