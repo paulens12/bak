@@ -361,8 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
 *.csv
 *.dat
-/PolarLab.zip
-*.png
-Polar2DSingle/uv.xlsx
+*.xlsx
