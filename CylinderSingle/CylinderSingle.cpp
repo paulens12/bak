@@ -14,7 +14,7 @@ using namespace std;
 //#define L 60000
 //#define SNAPSHOT_STEP 10000
 
-#define L 6000000
+#define L 30000
 #define SNAPSHOT_STEP 10000
 
 
@@ -149,4 +149,8 @@ int main()
 	}
 	auto duration = (clock() - start) / (double)CLOCKS_PER_SEC;
 	cout << "duration: " << duration << endl;
+
+	datustream.close();
+	datvstream.close();
+	datostream.close();
 }

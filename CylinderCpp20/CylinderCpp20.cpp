@@ -1,4 +1,4 @@
-#define THREAD_N 2
+#define THREAD_N 14
 
 #include <stdio.h>
 #include <iostream>
@@ -17,7 +17,7 @@ using namespace std;
 //#define L 60000
 //#define SNAPSHOT_STEP 10000
 
-#define L 6000000
+#define L 30000
 #define SNAPSHOT_STEP 10000
 
 // perform one iteration of simulation

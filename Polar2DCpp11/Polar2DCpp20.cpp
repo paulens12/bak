@@ -1,4 +1,4 @@
-#define THREAD_N 2
+#define THREAD_N 14
 
 #include <stdio.h>
 #include <iostream>
@@ -17,14 +17,14 @@ using namespace std;
 //#define L 60000
 //#define SNAPSHOT_STEP 10000
 
-#define L 6000000
-#define SNAPSHOT_STEP 10000
+#define L 300000
+#define SNAPSHOT_STEP 100000
 
 // perform one iteration of simulation
 void iterate(double* matrixU2, double* matrixV2, double* matrixU1, double* matrixV1, int bufferlength, int size)
 {
-	PolarPNG uPng(R, 3, F, 4.0);
-	PolarPNG vPng(R, 3, F, 2.0);
+	PolarPNG uPng(R, 3, F, 4.5);
+	PolarPNG vPng(R, 3, F, 0.6);
 
 	uPng.savePNG(matrixU1, "u_step0.png");
 	vPng.savePNG(matrixV1, "v_step0.png");
@@ -106,6 +106,8 @@ void iterate(double* matrixU2, double* matrixV2, double* matrixU1, double* matri
 
 	auto duration = (clock() - start) / (double)CLOCKS_PER_SEC;
 	cout << "duration: " << duration << endl;
+	datustream.close();
+	datvstream.close();
 }
 
 int main()

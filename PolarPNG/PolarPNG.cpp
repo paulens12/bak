@@ -213,6 +213,8 @@ void PolarPNG::saveOverview(std::string filename) {
 }
 void PolarPNG::saveSideOverview(std::string filename) {
 	int height = _sideFrames.size();
+	if (height == 0)
+		return;
 
 	gdImagePtr img = gdImageCreate(_fSteps, height);
 	int colorsLocal[256];

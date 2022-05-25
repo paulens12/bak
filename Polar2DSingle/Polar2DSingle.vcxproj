@@ -144,6 +144,11 @@
   <ItemGroup>
     <ClCompile Include="Polar2DSingle.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PolarPNG\PolarPNG.vcxproj">
+      <Project>{dd95d566-3885-46ea-a312-32d9be9fa235}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

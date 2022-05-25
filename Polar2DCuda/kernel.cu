@@ -18,8 +18,8 @@
 
 using namespace std;
 
-#define L 3000000
-#define SNAPSHOT_STEP 10000
+#define L 300000
+#define SNAPSHOT_STEP 100000
 
 __global__
 void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput)
@@ -105,10 +105,10 @@ int main(int argc, char* argv[])
 	cudaMemcpy(matrixV1, matrixV, size, cudaMemcpyHostToDevice);
 	cudaMemcpy(matrixU2, matrixU, size, cudaMemcpyHostToDevice);
 	cudaMemcpy(matrixV2, matrixV, size, cudaMemcpyHostToDevice);
-	boundaryKernel <<< 2, 32 >>> (matrixU1, matrixV1);
+	boundaryKernel <<< 28, 8 >>> (matrixU1, matrixV1);
 
-	PolarPNG uPng(R, 3, F, 4.0);
-	PolarPNG vPng(R, 3, F, 2.0);
+	PolarPNG uPng(R, 3, F, 4.5);
+	PolarPNG vPng(R, 3, F, 0.6);
 
 	uPng.savePNG(matrixU, "u_step0.png");
 	vPng.savePNG(matrixV, "v_step0.png");
@@ -137,12 +137,12 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < L; i++)
 	{
 		cudaGetLastError(); // flush previous errors
-		calcKernel <<< 2, 32 >>> (matrixU2, matrixV2, matrixU1, matrixV1);
+		calcKernel <<< 7, 32 >>> (matrixU2, matrixV2, matrixU1, matrixV1);
 		err = cudaGetLastError();
 		if (err != cudaSuccess)
 			cout << "calcKernel: " << cudaGetErrorString(err) << endl;
 
-		boundaryKernel <<< 2, 32 >>> (matrixU2, matrixV2);
+		boundaryKernel <<< 7, 32 >>> (matrixU2, matrixV2);
 		err = cudaGetLastError();
 		if (err != cudaSuccess)
 			cout << "boundaryKernel: " << cudaGetErrorString(err) << endl;

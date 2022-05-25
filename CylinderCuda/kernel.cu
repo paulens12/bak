@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define L 6000000
+#define L 30000
 #define SNAPSHOT_STEP 10000
 
 __global__
@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
 	dim3 boundaryBlocks(28, 1);
 	dim3 boundaryThreads(1, 32);
 	dim3 calcBlocks(2, 14);
-	dim3 calcThreads(32, 1);
+	dim3 calcThreads(32, 2);
 	boundaryKernel <<< boundaryBlocks, boundaryThreads >> > (matrixU1, matrixV1, matrixO1);
 
 	PolarPNG uPng(R, 3, F, 4.0);
