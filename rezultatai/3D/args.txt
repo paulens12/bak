@@ -1,0 +1,20 @@
+__constant__ const double Du = 0.1;
+__constant__ const double chi = 8.3;
+__constant__ const double au = 1;
+__constant__ const double Bv = 0.73;
+__constant__ const double dt = 0.00005;
+__constant__ const double gamma_o = 0.025;
+__constant__ const double Do = 0.2;
+__constant__ const double o0 = 1;
+#define R_abs 4
+#define Z_abs 8
+#define R 40  /* %4 == 1 */
+#define F 224 /* %8 == 1 */
+#define Z 64
+
+#define L 6000000
+#define SNAPSHOT_STEP 10000
+
+uMax = 4.5
+vMax = 0.6
+oMax = 1.0

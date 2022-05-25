@@ -1,0 +1,14 @@
+#define W 224
+#define L 601
+#define LMult 10000
+
+long double Du = 0.1;
+long double chi = 8.3;
+long double au = 1;
+long double Bv = 0.73;
+long double dx = (8.0 * 3.14159265358979323846) / W;
+long double dx2 = dx * dx;
+long double dt = 0.00005;
+
+uMax = 4.5
+vMax = 0.6
