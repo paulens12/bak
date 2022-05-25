@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define L 300000
+#define L 1000000
 #define SNAPSHOT_STEP 100000
 
 __global__
@@ -26,24 +26,14 @@ void calcKernel(double* uOutput, double* vOutput, double* uInput, double* vInput
 {
 	int xOffset = threadIdx.x + blockIdx.x * blockDim.x;
 	int xStride = blockDim.x * gridDim.x;
+	int yOffset = threadIdx.y + blockIdx.y * blockDim.y;
+	int yStride = blockDim.y * gridDim.y;
 
-	for (int r = 1; r < R / 4; ++r) {
+	for (int r = yOffset + 1; r < R - 1; r += yStride) {
 		double ro = r * dr;
-		for (int f = xOffset * 4; f < F; f += xStride * 4) {
-			calcPoint(uOutput, vOutput, uInput, vInput, ro, r, f);
-		}
-	}
-
-	for (int r = R / 4; r < R / 2; ++r) {
-		double ro = r * dr;
-		for (int f = xOffset * 2; f < F; f += xStride * 2) {
-			calcPoint(uOutput, vOutput, uInput, vInput, ro, r, f);
-		}
-	}
-
-	for (int r = R / 2; r < R - 1; ++r) {
-		double ro = r * dr;
-		for (int f = xOffset; f < F; f += xStride) {
+		int rOffset = (r < R / 4) ? xOffset * 4 : (r < R / 2) ? xOffset * 2 : xOffset;
+		int rStride = (r < R / 4) ? xStride * 4 : (r < R / 2) ? xStride * 2 : xStride;
+		for (int f = rOffset; f < F; f += rStride) {
 			calcPoint(uOutput, vOutput, uInput, vInput, ro, r, f);
 		}
 	}
@@ -131,13 +121,16 @@ int main(int argc, char* argv[])
 	cudaGetDeviceProperties(&props, deviceId);
 #endif
 
+	dim3 calcBlocks(7, 5);
+	dim3 calcThreads(32, 1);
+
 	auto start = clock();
 	auto start_current = start;
 	double* temp = nullptr;
 	for (int i = 0; i < L; i++)
 	{
 		cudaGetLastError(); // flush previous errors
-		calcKernel <<< 7, 32 >>> (matrixU2, matrixV2, matrixU1, matrixV1);
+		calcKernel <<< calcBlocks, calcThreads >>> (matrixU2, matrixV2, matrixU1, matrixV1);
 		err = cudaGetLastError();
 		if (err != cudaSuccess)
 			cout << "calcKernel: " << cudaGetErrorString(err) << endl;
